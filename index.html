@@ -193,7 +193,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-04-13 20:54:56" itemprop="dateModified" datetime="2024-04-13T20:54:56+08:00">2024-04-13</time>
+                <time title="修改时间：2024-04-13 21:03:20" itemprop="dateModified" datetime="2024-04-13T21:03:20+08:00">2024-04-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -216,120 +216,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><ul>
+          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>用Github Page来托管博客，不用花钱~~，我觉得很不错</p>
+<ul>
 <li>本地环境：M1 Pro Macbook Pro</li>
-<li>博客站点：Github Page</li>
-</ul>
-<h1 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h1><h2 id="安装Node-js"><a href="#安装Node-js" class="headerlink" title="安装Node.js"></a>安装Node.js</h2><p>我的电脑之前可能通过pkg的方式安装过Node.js，但在本文编写过程中发现，我允许npm命令想安装软件包的时候，会提示</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">permission denied, <span class="built_in">mkdir</span> <span class="string">&#x27;/usr/local/lib/node_modules/</span></span><br></pre></td></tr></table></figure>
-
-<p>于是我将原本位于 <code>/usr/local/bin/node</code>下的Node删除并通过brew重新安装</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install node</span><br></pre></td></tr></table></figure>
-
-<h2 id="安装Hexo"><a href="#安装Hexo" class="headerlink" title="安装Hexo"></a>安装Hexo</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
-
-<h2 id="新建hexo项目"><a href="#新建hexo项目" class="headerlink" title="新建hexo项目"></a>新建hexo项目</h2><p>在自定义的目录下运行以下命令即可</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init 项目名</span><br></pre></td></tr></table></figure>
-
-<h2 id="在本地预览项目"><a href="#在本地预览项目" class="headerlink" title="在本地预览项目"></a>在本地预览项目</h2><p>hexo可以在本地启动服务器进行预览，我习惯使用这个命令启动服务器并预览</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s -g</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><code>-g</code> 用于重新生成所需的页面和文档信息</p>
-</blockquote>
-<h2 id="配置mermaid插件"><a href="#配置mermaid插件" class="headerlink" title="配置mermaid插件"></a>配置mermaid插件</h2><p>默认状态下hexo似乎不支持mermaid流程图，而我觉得如果有mermaid流程图能大大减少去网页上找图片的时间，因此还是要配置一下才行。</p>
-<p>第一步，安装mermaid插件</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-filter-mermaid-diagrams</span><br></pre></td></tr></table></figure>
-
-<p>然后配置hexo根目录的_config.yml，将mermaid的enable从 <code>false</code>改为 <code>true</code></p>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Mermaid tag</span></span><br><span class="line"><span class="attr">mermaid:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="comment"># Available themes: default | dark | forest | neutral</span></span><br><span class="line">  <span class="attr">theme:</span> <span class="string">forest</span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>我的配置中本身就有mermaid的选项，所以我也不确定新版本是否还需要手动安装插件，也许直接将enble修改为true即可。另外，theme部分，我个人觉得default和neutral的更好看一点。</p>
-</blockquote>
-<h2 id="稍微美化一下Hexo"><a href="#稍微美化一下Hexo" class="headerlink" title="稍微美化一下Hexo"></a>稍微美化一下Hexo</h2><p>我个人比较喜欢的hexo主题叫做<code>hexo-next</code>,也就是我当前使用的主题，我觉得这个主题很简约，挺喜欢这个风格的</p>
-<h3 id="安装主题插件"><a href="#安装主题插件" class="headerlink" title="安装主题插件"></a>安装主题插件</h3><p>这个主题有两种安装方式，<strong>都需要先进入项目根目录</strong>。</p>
-<h4 id="通过npm安装"><a href="#通过npm安装" class="headerlink" title="通过npm安装"></a>通过npm安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-theme-next</span><br></pre></td></tr></table></figure>
-
-<h4 id="通过git-clone安装"><a href="#通过git-clone安装" class="headerlink" title="通过git clone安装"></a>通过git clone安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/next-theme/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure>
-
-<h3 id="配置使用next主题"><a href="#配置使用next主题" class="headerlink" title="配置使用next主题"></a>配置使用next主题</h3><p>编辑项目根目录的<code>_config.yml</code>，搜索<code>theme</code>关键字，将<code>default</code>修改为<code>next</code>即可</p>
-<p>再次运行本地预览的命令，既可以看到效果。</p>
-<h1 id="Github-Page配置与推送部署"><a href="#Github-Page配置与推送部署" class="headerlink" title="Github Page配置与推送部署"></a>Github Page配置与推送部署</h1><p>以下配置用于将博客部署在Github Page上，假定你已经在本地电脑上配置好了github的ssh密钥了</p>
-<h2 id="创建github仓库"><a href="#创建github仓库" class="headerlink" title="创建github仓库"></a>创建github仓库</h2><p>Github Page仓库的创建命名规则为：用户名.github.io<br>我的github用户名是<code>jdjingdian</code>，因此我需要创建jdjingdian.github.io仓库，创建时记得勾选添加默认README，这样可以自动创建默认分支。</p>
-<h2 id="安装git插件"><a href="#安装git插件" class="headerlink" title="安装git插件"></a>安装git插件</h2><p>需要安装git插件才能推送部署，否则就会报错</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">magicdian@MacBook-Pro-14 hexo_blog % hexo d -g</span><br><span class="line">INFO  Validating config</span><br><span class="line">INFO  Start processing</span><br><span class="line">INFO  Files loaded <span class="keyword">in</span> 66 ms</span><br><span class="line">INFO  0 files generated <span class="keyword">in</span> 77 ms</span><br><span class="line">ERROR Deployer not found: git</span><br></pre></td></tr></table></figure>
-<p>安装git deployer的命令如下</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
-
-<h2 id="配置hexo使用git"><a href="#配置hexo使用git" class="headerlink" title="配置hexo使用git"></a>配置hexo使用git</h2><p>修改根目录中的<code>_config.yml</code>配置文件中deploy部分的内容</p>
-<p>我的配置文件如下，type填入<code>git</code>, repository填入自建仓库的git clone地址信息，branch填入你项目的默认branch信息，新创建的项目默认branch一般为main。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  <span class="built_in">type</span>: git</span><br><span class="line">  repository: git@github.com:jdjingdian/jdjingdian.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用自己的域名"><a href="#使用自己的域名" class="headerlink" title="使用自己的域名"></a>使用自己的域名</h2><p>假如想要配置自定义域名，需要执行以下步骤，假定你有自己的域名</p>
-<h3 id="DNS设置"><a href="#DNS设置" class="headerlink" title="DNS设置"></a>DNS设置</h3><p>在自己域名的DNS控制台里创建CNAME记录，比如我想通过<code>blog.magicdian.cn</code>访问我的博客，就将blog.magicdian.cn域名设置为CNAME记录，并指向github给我的默认的page域名，即jdjingdian.github.io</p>
-<h3 id="Github设置"><a href="#Github设置" class="headerlink" title="Github设置"></a>Github设置</h3><p>在github page项目的<strong>Settings</strong>里找到<strong>Pages</strong>，然后在<strong>Custom domain</strong>里填入自己的域名即可</p>
-<h3 id="hexo项目设置"><a href="#hexo项目设置" class="headerlink" title="hexo项目设置"></a>hexo项目设置</h3><p>每次部署推送的时候，就会覆盖github page上的信息，如果不进行配置，会把github设置里的<strong>Custom domain</strong>信息抹除。</p>
-<p>在hexo项目的source文件夹里创建文件名为<code>CNAME</code>的文件，在其中填入你的自定义域名即可。</p>
-<h2 id="推送当前版本到github-page"><a href="#推送当前版本到github-page" class="headerlink" title="推送当前版本到github page"></a>推送当前版本到github page</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d -g</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>推送后可能会过一会才能看到效果</p>
-</blockquote>
-<h1 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h1><h2 id="新建文章"><a href="#新建文章" class="headerlink" title="新建文章"></a>新建文章</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new <span class="string">&quot;文章名称&quot;</span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>使用这个命令后，会在hexo项目的 <code>source/_post</code>目录中生成 <code>文章名称.md</code>文件，我们编辑这个文件即可</p>
-</blockquote>
-<h2 id="新建页面"><a href="#新建页面" class="headerlink" title="新建页面"></a>新建页面</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new page <span class="string">&quot;页面名称&quot;</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="生成页面信息"><a href="#生成页面信息" class="headerlink" title="生成页面信息"></a>生成页面信息</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo generate</span><br></pre></td></tr></table></figure>
-
-<h2 id="本地运行服务器预览效果"><a href="#本地运行服务器预览效果" class="headerlink" title="本地运行服务器预览效果"></a>本地运行服务器预览效果</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-
-<p>上面这条命令基于已有的页面信息运行，为了方便，可以使用如下的命令，将generate部分组合到一起运行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo s -g</span><br></pre></td></tr></table></figure>
-
-<h2 id="推送部署"><a href="#推送部署" class="headerlink" title="推送部署"></a>推送部署</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure>
-
-<p>同样的，为了省略generate步骤，可以用</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d -g</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h1 id="测试一下Markdown的展示效果"><a href="#测试一下Markdown的展示效果" class="headerlink" title="测试一下Markdown的展示效果"></a>测试一下Markdown的展示效果</h1><h2 id="链接链接效果"><a href="#链接链接效果" class="headerlink" title="链接链接效果"></a>链接链接效果</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[这是跳转百度的链接](www.baidu.com)</span><br></pre></td></tr></table></figure>
-
-<p><a href="www.baidu.com">这是跳转百度的链接</a></p>
-<blockquote>
-<p>似乎有点问题，之后看看怎么直接跳转</p>
-</blockquote>
-<h2 id="测试区块效果"><a href="#测试区块效果" class="headerlink" title="测试区块效果"></a>测试区块效果</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt; 测试一段区块</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>测试一段区块</p>
-</blockquote>
-<h2 id="测试代码和命令效果"><a href="#测试代码和命令效果" class="headerlink" title="测试代码和命令效果"></a>测试代码和命令效果</h2><p>删库跑路命令</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">rm</span> -rf /</span><br></pre></td></tr></table></figure>
-
-<p>C++代码效果</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>swift代码效果</p>
-<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> foundation</span><br><span class="line"><span class="keyword">import</span> SwiftUI</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ContentView</span>: <span class="title class_">View</span> &#123;</span><br><span class="line">    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">View</span> &#123;</span><br><span class="line">        <span class="type">Text</span>(<span class="string">&quot;Hello, World!&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="测试mermaid图"><a href="#测试mermaid图" class="headerlink" title="测试mermaid图"></a>测试mermaid图</h2><p>graph TD示例</p>
-<pre class="mermaid">graph TD
-A[Start] --> B{Decision}
-B --> C{Yes}
-B --> D{No}
-C --> E[End]
-D --> F[End]</pre>
-
-<p>sequenceDiagram示例</p>
-<pre class="mermaid">sequenceDiagram
-    participant User
-    participant System
-    User->>System: 请求数据
-    System->>User: 返回数据
-    User->>System: 结束</pre>
-
+<li>博客站点：Github Page
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/12/%E5%9F%BA%E4%BA%8EGithub-Page%E6%89%93%E9%80%A0Hexo%E5%8D%9A%E5%AE%A2%E7%8E%AF%E5%A2%83/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -371,10 +269,16 @@ D --> F[End]</pre>
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2024-04-12 22:47:32 / 修改时间：22:57:09" itemprop="dateCreated datePublished" datetime="2024-04-12T22:47:32+08:00">2024-04-12</time>
+              <time title="创建时间：2024-04-12 22:47:32" itemprop="dateCreated datePublished" datetime="2024-04-12T22:47:32+08:00">2024-04-12</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-04-13 21:04:02" itemprop="dateModified" datetime="2024-04-13T21:04:02+08:00">2024-04-13</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -397,11 +301,14 @@ D --> F[End]</pre>
 
       
           <h1 id="新的开始"><a href="#新的开始" class="headerlink" title="新的开始"></a>新的开始</h1><p>以前在VPS上搭建过WordPress，但是总感觉太“重”了，有点过于花里胡哨了，折腾配置WordPress都花了不少时间。</p>
-<p>前一段时间，我尝试在微信公众号（@魔趣典藏目录）上分享我的见闻，但是公众号主要受众是手机用户，如果发表长文的话，阅读体验应该不太好，而我的文章中可能会包含Linux命令或者代码，在手机上阅读着实有点不好受。</p>
-<p>之前在网上看到过一些博客采用Hexo来搭建，我很喜欢这种简洁的风格，今天我终于决定自己配置一波，我发现实际上我并不需要购买VPS，我将Hexo部署在Github Page上，然后让我自己的域名指向这里就好了。</p>
-<p>未来我的想法会选择在公众号和这里更新，这里会发布完整的文章，而公众号上可能主要以中短篇幅的文章为主，这样一来，公众号叫目录，似乎也很合理了。</p>
-<p>如果有可能，希望未来博客中的内容，能被搜索引擎抓取，并让更多人获得到帮助。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/12/%E6%96%B0%E9%80%A0%E7%9A%84%E5%8D%9A%E5%AE%A2/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -446,6 +353,13 @@ D --> F[End]</pre>
 
               <time title="创建时间：2024-04-12 17:59:35" itemprop="dateCreated datePublished" datetime="2024-04-12T17:59:35+08:00">2024-04-12</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-04-13 21:04:22" itemprop="dateModified" datetime="2024-04-13T21:04:22+08:00">2024-04-13</time>
+              </span>
 
           
 
@@ -459,19 +373,14 @@ D --> F[End]</pre>
 
       
           <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/12/hello-world/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
