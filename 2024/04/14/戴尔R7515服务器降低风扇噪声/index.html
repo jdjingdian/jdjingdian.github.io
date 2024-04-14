@@ -20,30 +20,37 @@
     var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="MAGICDIANの博客">
-<meta property="og:type" content="website">
-<meta property="og:title" content="魔趣典藏阁">
-<meta property="og:url" content="https://blog.magicdian.cn/index.html">
+  <meta name="description" content="前情提要2022年末，逛闲鱼的时候，发现了一个非常吸引人的准系统配置，戴尔R7515，CPU是AMD EPYC 7402P，24核心48线程, 并且还带H730P阵列卡。很快我就将这个机子买回家里，但毕竟是机架式服务器，声音还是有点大，因此我要想办法把声音降低才行。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="戴尔R7515服务器降低风扇噪声">
+<meta property="og:url" content="https://blog.magicdian.cn/2024/04/14/%E6%88%B4%E5%B0%94R7515%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%99%8D%E4%BD%8E%E9%A3%8E%E6%89%87%E5%99%AA%E5%A3%B0/index.html">
 <meta property="og:site_name" content="魔趣典藏阁">
-<meta property="og:description" content="MAGICDIANの博客">
+<meta property="og:description" content="前情提要2022年末，逛闲鱼的时候，发现了一个非常吸引人的准系统配置，戴尔R7515，CPU是AMD EPYC 7402P，24核心48线程, 并且还带H730P阵列卡。很快我就将这个机子买回家里，但毕竟是机架式服务器，声音还是有点大，因此我要想办法把声音降低才行。">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-04-14T12:20:44.000Z">
+<meta property="article:modified_time" content="2024-04-14T12:51:01.681Z">
 <meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="服务器">
+<meta property="article:tag" content="戴尔">
+<meta property="article:tag" content="idrac">
+<meta property="article:tag" content="AMD">
+<meta property="article:tag" content="EPYC">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://blog.magicdian.cn/">
+<link rel="canonical" href="https://blog.magicdian.cn/2024/04/14/%E6%88%B4%E5%B0%94R7515%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%99%8D%E4%BD%8E%E9%A3%8E%E6%89%87%E5%99%AA%E5%A3%B0/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>魔趣典藏阁</title>
+  <title>戴尔R7515服务器降低风扇噪声 | 魔趣典藏阁</title>
   
 
 
@@ -156,9 +163,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -174,10 +182,9 @@
       <meta itemprop="name" content="魔趣典藏阁">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/14/%E6%88%B4%E5%B0%94R7515%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%99%8D%E4%BD%8E%E9%A3%8E%E6%89%87%E5%99%AA%E5%A3%B0/" class="post-title-link" itemprop="url">戴尔R7515服务器降低风扇噪声</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          戴尔R7515服务器降低风扇噪声
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -210,267 +217,59 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>2022年末，逛闲鱼的时候，发现了一个非常吸引人的准系统配置，戴尔R7515，CPU是AMD EPYC 7402P，24核心48线程, 并且还带H730P阵列卡。很快我就将这个机子买回家里，但毕竟是机架式服务器，声音还是有点大，因此我要想办法把声音降低才行。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/04/14/%E6%88%B4%E5%B0%94R7515%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%99%8D%E4%BD%8E%E9%A3%8E%E6%89%87%E5%99%AA%E5%A3%B0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
+        <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>2022年末，逛闲鱼的时候，发现了一个非常吸引人的准系统配置，戴尔R7515，CPU是AMD EPYC 7402P，24核心48线程, 并且还带H730P阵列卡。很快我就将这个机子买回家里，但毕竟是机架式服务器，声音还是有点大，因此我要想办法把声音降低才行。</p>
+<span id="more"></span>
+
+<h2 id="为什么声音大？"><a href="#为什么声音大？" class="headerlink" title="为什么声音大？"></a>为什么声音大？</h2><p>我注意到安装了M.2接口的NVME固态硬盘后，服务器的风扇转速似乎就被锁定到一个比较高的值，而没装NVME硬盘的时候声音会小一点，上网调查了一下，发现是戴尔服务器检测到系统里有非官方认证的配件的话，就会将风扇转速提高，以保证系统散热的稳定性。这个功能在机房应该影响不大，但在家里，说实话还是有点吵，即便放在房间里关上门，也仍然能听到风扇高频的噪声。</p>
+<p>好在我在网上找到了教程，可以通过配置关闭这个自动增加风扇转速的功能。</p>
+<h1 id="配置关闭LFM-Mode"><a href="#配置关闭LFM-Mode" class="headerlink" title="配置关闭LFM Mode"></a>配置关闭LFM Mode</h1><p>LFM全称是<code>Linear Feet per Minute</code>，在戴尔的系统设置内，每个PCIE槽位都有LFM模式的设置，我的理解是，如果这个模式处于打开或者自定义的状态，风扇转速就会根据LFM的参数进行便宜，进而造成风扇转速高的问题。</p>
+<h2 id="开启idrac的SSH功能"><a href="#开启idrac的SSH功能" class="headerlink" title="开启idrac的SSH功能"></a>开启idrac的SSH功能</h2><p>进入web控制台<br><code>IDRAC设置 —— 服务 —— SSH</code><br>配置为启用</p>
+<h2 id="开启racadm功能"><a href="#开启racadm功能" class="headerlink" title="开启racadm功能"></a>开启racadm功能</h2><p>在web控制台<br><code>IDRAC设置 —— 服务 —— 远程RACADM</code><br>配置为已启用</p>
+<h2 id="通过SSH登录idrac控制台"><a href="#通过SSH登录idrac控制台" class="headerlink" title="通过SSH登录idrac控制台"></a>通过SSH登录idrac控制台</h2><p>以下是我登录后的显示状态</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">magicdian@MacBook-Pro-14 hexo_blog % ssh root@192.168.4.10</span><br><span class="line">(root@192.168.4.10) Password: </span><br><span class="line">racadm&gt;&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="获取PCIE槽的LFM信息"><a href="#获取PCIE槽的LFM信息" class="headerlink" title="获取PCIE槽的LFM信息"></a>获取PCIE槽的LFM信息</h2><p>我们可以通过命令获取PCIE槽位的LFM信息，<code>racadm get system.pcieslotlfm.槽位ID</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">racadm&gt;&gt;racadm get system.pcieslotlfm.2</span><br><span class="line">[Key=system.Embedded.1<span class="comment">#PCIeSlotLFM.2]</span></span><br><span class="line"><span class="comment">#3rdPartyCard=No</span></span><br><span class="line"><span class="comment">#CardType=Video</span></span><br><span class="line">LFMMode=Automatic</span><br><span class="line"><span class="comment">#MaxLFM=240</span></span><br><span class="line"><span class="comment">#PCIeInletTemperature=39</span></span><br><span class="line"><span class="comment">#SlotState=Defined</span></span><br><span class="line"><span class="comment">#TargetLFM=Temperature Controlled</span></span><br></pre></td></tr></table></figure>
+<p>以上示例中，我的PCIE槽2的<code>#3rdPartyCard=No</code>表明这个槽位的设备不是第三方设备，我们不用管这种，我们需要找到<code>#3rdPartyCard=Yes</code>的槽位</p>
+<h2 id="禁用LFM-Mode"><a href="#禁用LFM-Mode" class="headerlink" title="禁用LFM Mode"></a>禁用LFM Mode</h2><p>我的PCIE槽位4是第三方固态硬盘，使用如下命令关闭LFM Mode</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">racadm <span class="built_in">set</span> system.pcieslotlfm.4.lfmmode disabled</span><br></pre></td></tr></table></figure>
+<p>输入完上面的命令再次执行检测</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">racadm&gt;&gt;racadm get system.pcieslotlfm.4</span><br><span class="line">[Key=system.Embedded.1<span class="comment">#PCIeSlotLFM.4]</span></span><br><span class="line"><span class="comment">#3rdPartyCard=Yes</span></span><br><span class="line"><span class="comment">#CardType=PCIeSSD</span></span><br><span class="line">LFMMode=Disabled</span><br><span class="line"><span class="comment">#MaxLFM=450</span></span><br><span class="line"><span class="comment">#PCIeInletTemperature=39</span></span><br><span class="line"><span class="comment">#SlotState=Defined</span></span><br><span class="line"><span class="comment">#TargetLFM=-</span></span><br></pre></td></tr></table></figure>
+<p>可以看到LFMMode设置为Disabled了，表明设置成功。</p>
+<p>如果系统中有多个槽位存在第三方PCIE设备，按上面的方法进行配置即可，全部第三方槽位都关闭LFM Mode后，应该可以听到风扇声很快就降低了。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>对于R7515型号来说，请不要更新idrac版本高于7，我目前保持idrac版本为<code>6.10.80.00</code>，因为一旦更新主版本到7以上，LFM的设置就不起作用了，不知道是戴尔的bug还是故意的。</p>
+
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
+          <div class="post-tags">
+              <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag"># 服务器</a>
+              <a href="/tags/%E6%88%B4%E5%B0%94/" rel="tag"># 戴尔</a>
+              <a href="/tags/idrac/" rel="tag"># idrac</a>
+              <a href="/tags/AMD/" rel="tag"># AMD</a>
+              <a href="/tags/EPYC/" rel="tag"># EPYC</a>
+          </div>
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/2024/04/12/%E5%9F%BA%E4%BA%8EGithub-Page%E6%89%93%E9%80%A0Hexo%E5%8D%9A%E5%AE%A2%E7%8E%AF%E5%A2%83/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIANの博客">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/12/%E5%9F%BA%E4%BA%8EGithub-Page%E6%89%93%E9%80%A0Hexo%E5%8D%9A%E5%AE%A2%E7%8E%AF%E5%A2%83/" class="post-title-link" itemprop="url">基于Github Page打造Hexo博客环境</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-04-12 23:38:04" itemprop="dateCreated datePublished" datetime="2024-04-12T23:38:04+08:00">2024-04-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-04-14 20:33:48" itemprop="dateModified" datetime="2024-04-14T20:33:48+08:00">2024-04-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>用Github Page来托管博客，不用花钱~~，我觉得很不错</p>
-<ul>
-<li>本地环境：M1 Pro Macbook Pro</li>
-<li>博客站点：Github Page
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/04/12/%E5%9F%BA%E4%BA%8EGithub-Page%E6%89%93%E9%80%A0Hexo%E5%8D%9A%E5%AE%A2%E7%8E%AF%E5%A2%83/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/2024/04/12/%E6%96%B0%E9%80%A0%E7%9A%84%E5%8D%9A%E5%AE%A2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIANの博客">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/12/%E6%96%B0%E9%80%A0%E7%9A%84%E5%8D%9A%E5%AE%A2/" class="post-title-link" itemprop="url">新造的博客</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-04-12 22:47:32" itemprop="dateCreated datePublished" datetime="2024-04-12T22:47:32+08:00">2024-04-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-04-13 21:04:02" itemprop="dateModified" datetime="2024-04-13T21:04:02+08:00">2024-04-13</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%9A%8F%E6%83%B3/" itemprop="url" rel="index"><span itemprop="name">随想</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="新的开始"><a href="#新的开始" class="headerlink" title="新的开始"></a>新的开始</h1><p>以前在VPS上搭建过WordPress，但是总感觉太“重”了，有点过于花里胡哨了，折腾配置WordPress都花了不少时间。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/04/12/%E6%96%B0%E9%80%A0%E7%9A%84%E5%8D%9A%E5%AE%A2/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/04/12/%E5%9F%BA%E4%BA%8EGithub-Page%E6%89%93%E9%80%A0Hexo%E5%8D%9A%E5%AE%A2%E7%8E%AF%E5%A2%83/" rel="prev" title="基于Github Page打造Hexo博客环境">
+      <i class="fa fa-chevron-left"></i> 基于Github Page打造Hexo博客环境
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/2024/04/12/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIANの博客">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/12/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-04-12 17:59:35" itemprop="dateCreated datePublished" datetime="2024-04-12T17:59:35+08:00">2024-04-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2024-04-13 21:04:22" itemprop="dateModified" datetime="2024-04-13T21:04:22+08:00">2024-04-13</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/04/12/hello-world/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
   
 
 
@@ -523,6 +322,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%A3%B0%E9%9F%B3%E5%A4%A7%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">为什么声音大？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%85%B3%E9%97%ADLFM-Mode"><span class="nav-number">2.</span> <span class="nav-text">配置关闭LFM Mode</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%90%AFidrac%E7%9A%84SSH%E5%8A%9F%E8%83%BD"><span class="nav-number">2.1.</span> <span class="nav-text">开启idrac的SSH功能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%90%AFracadm%E5%8A%9F%E8%83%BD"><span class="nav-number">2.2.</span> <span class="nav-text">开启racadm功能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9A%E8%BF%87SSH%E7%99%BB%E5%BD%95idrac%E6%8E%A7%E5%88%B6%E5%8F%B0"><span class="nav-number">2.3.</span> <span class="nav-text">通过SSH登录idrac控制台</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96PCIE%E6%A7%BD%E7%9A%84LFM%E4%BF%A1%E6%81%AF"><span class="nav-number">2.4.</span> <span class="nav-text">获取PCIE槽的LFM信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A6%81%E7%94%A8LFM-Mode"><span class="nav-number">2.5.</span> <span class="nav-text">禁用LFM Mode</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">3.</span> <span class="nav-text">后记</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
