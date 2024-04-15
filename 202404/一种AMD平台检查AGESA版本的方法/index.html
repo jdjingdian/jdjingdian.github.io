@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="我挺喜欢看更新日志的，不管是手机应用，还是电脑上的应用。 我觉得，更新日志能够让你知道更新后能获取到什么东西，或者知道更新后能有什么改善，但是有些厂商不喜欢写更新日志，惜字如金。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一种AMD平台检查AGESA版本的方法">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/%E4%B8%80%E7%A7%8DAMD%E5%B9%B3%E5%8F%B0%E6%A3%80%E6%9F%A5AGESA%E7%89%88%E6%9C%AC%E7%9A%84%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="我挺喜欢看更新日志的，不管是手机应用，还是电脑上的应用。 我觉得，更新日志能够让你知道更新后能获取到什么东西，或者知道更新后能有什么改善，但是有些厂商不喜欢写更新日志，惜字如金。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.yunyingpai.com/wp/2022/04/C1e5hXbwBQToj88LS3kq.png">
+<meta property="og:image" content="https://imgur.com/J31dIAc.jpg">
+<meta property="og:image" content="https://imgur.com/S8hsCBH.jpg">
+<meta property="og:image" content="https://imgur.com/4jdnBEi.jpg">
+<meta property="og:image" content="https://imgur.com/2hKa1P5.jpg">
+<meta property="og:image" content="https://imgur.com/G8K7BDv.jpg">
+<meta property="og:image" content="https://imgur.com/SCqkfSP.jpg">
+<meta property="article:published_time" content="2024-04-15T15:41:35.000Z">
+<meta property="article:modified_time" content="2024-04-15T15:43:51.352Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="戴尔">
+<meta property="article:tag" content="AMD">
+<meta property="article:tag" content="AGESA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.yunyingpai.com/wp/2022/04/C1e5hXbwBQToj88LS3kq.png">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/%E4%B8%80%E7%A7%8DAMD%E5%B9%B3%E5%8F%B0%E6%A3%80%E6%9F%A5AGESA%E7%89%88%E6%9C%AC%E7%9A%84%E6%96%B9%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>一种AMD平台检查AGESA版本的方法 | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/%E4%B8%80%E7%A7%8DAMD%E5%B9%B3%E5%8F%B0%E6%A3%80%E6%9F%A5AGESA%E7%89%88%E6%9C%AC%E7%9A%84%E6%96%B9%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一种AMD平台检查AGESA版本的方法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-15 23:41:35 / 修改时间：23:43:51" itemprop="dateCreated datePublished" datetime="2024-04-15T23:41:35+08:00">2024-04-15</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我挺喜欢看更新日志的，不管是手机应用，还是电脑上的应用。</p>
+<p>我觉得，更新日志能够让你知道更新后能获取到什么东西，或者知道更新后能有什么改善，但是有些厂商不喜欢写更新日志，惜字如金。</p>
+<span id="more"></span>
+
+<p><img src="https://image.yunyingpai.com/wp/2022/04/C1e5hXbwBQToj88LS3kq.png"></p>
+<p>说回正题，我在车贷还完之后，我报复性消费了一把，在京东第三方店铺买了个翻新的Alienware M17R5。</p>
+<p>对于电脑来说吧，我感觉最重要的更新就是BIOS更新了。</p>
+<p>因为BIOS更新的时候有时会伴随微码更新，微码更新本质上也是对CPU进行更新，CPU其实也是会通过更新解决一些BUG，或者优化CPU运行的逻辑。</p>
+<p>简单来说，就是可以战未来。比如之前AMD平台在Win11上有卡顿问题，更新微码后解决了这个问题。</p>
+<p>在AMD平台的电脑上，微码，也叫做AGESA，通过AGESA的版本，有时我们可以通过AGESA版本来确定，电脑运行时的一些BUG是否跟微码有关。</p>
+<p>但是戴尔在AMD消费级平台上，对于BIOS更新相关的说明，写的含糊其辞，不写清楚AGESA版本，甚至于我都不知道每次BIOS版本到底更新了什么内容。</p>
+<p>以下摘抄自戴尔BIOS更新页面的说明，看着非常官方，看着说了很多，但又好像啥都没说。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">此软件包中包含戴尔系统 BIOS 更新。BIOS 是嵌入在系统主板上的小型内存芯片上的固件程序包。它可以控制键盘、显示器、磁盘驱动器和其他设备。此更新可解决戴尔安全公告 (DSA)。安全公告是一项声明，当安全漏洞影响到产品时，可针对该漏洞提供补救措施。</span><br><span class="line"></span><br><span class="line">## 补丁和增强功能</span><br><span class="line"></span><br><span class="line">- 此版本中包含戴尔安全公告 DSA-2023-178 和 DSA-2023-199 中披露的安全更新。有关更多信息，请参阅[戴尔安全公告和通知。](https://www.dell.com/support/security)</span><br></pre></td></tr></table></figure>
+
+<p>那没办法了，只能自己想办法把Agesa版本找出来了。</p>
+<p>一般来说，其实可以通过CPU-Z等软件，来获取版本的信息，但是不知道是戴尔的BIOS对操作系统屏蔽了这些信息，还是其他原因导致，我在CPU-Z和其他一些电脑信息查询软件里是没有找到相关信息。</p>
+<hr>
+<p>不多废话，研究后发现两个方法：</p>
+<h1 id="解包BIOS，然后查询agesa版本【推荐】"><a href="#解包BIOS，然后查询agesa版本【推荐】" class="headerlink" title="解包BIOS，然后查询agesa版本【推荐】"></a>解包BIOS，然后查询agesa版本【推荐】</h1><p>首先需要解包，戴尔的BIOS下载下来后是exe后缀，实际上本质是个自解压的zip文件（仅限amd平台，intel平台需要用另外的解包软件才能解包）</p>
+<p>因此将BIOS文件后缀名改为<code>.zip</code>后即可解压，解压后可以在目录内看到一个比较大的bin文件(isflash.bin)，这个就是实际的BIOS文件，目录中还有一些其他exe可执行文件，是用于更新bios的，这里我们不需要关心。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">magicdian@MacBook-Pro-14 Alienware_m15_R7_m17_R5_1.13.1 % <span class="built_in">ls</span> -l</span><br><span class="line">total 91760</span><br><span class="line">-rw-r-----  1 magicdian  staff    286664  9 27  2021 BiosImageProcx64.dll</span><br><span class="line">-rw-r-----  1 magicdian  staff    105886  9 27  2021 Ding.wav</span><br><span class="line">-rw-r-----  1 magicdian  staff    225560  9 27  2021 FWUpdLcl.exe</span><br><span class="line">-rw-r-----  1 magicdian  staff     42440  9 27  2021 FlsHook.exe</span><br><span class="line">-rw-r-----  1 magicdian  staff   6871328 10 17 12:39 H2OFFT-Wx64.exe</span><br><span class="line">-rw-r-----  1 magicdian  staff     10574  9 27  2021 H2OFFT.<span class="built_in">cat</span></span><br><span class="line">-rw-r-----  1 magicdian  staff      6668  9 27  2021 H2OFFT.inf</span><br><span class="line">-rw-r-----  1 magicdian  staff     48008  9 27  2021 H2OFFT64.sys</span><br><span class="line">-rw-r-----  1 magicdian  staff       526  9 27  2021 Microsoft.VC90.CRT.manifest</span><br><span class="line">-rw-r-----  1 magicdian  staff       550  9 27  2021 Microsoft.VC90.MFC.manifest</span><br><span class="line">-rw-r-----  1 magicdian  staff  36133360 12 21 16:26 isflash.bin</span><br><span class="line">-rw-r-----  1 magicdian  staff   1679864  9 27  2021 mfc90u.dll</span><br><span class="line">-rw-r-----  1 magicdian  staff    851456  9 27  2021 msvcp90.dll</span><br><span class="line">-rw-r-----  1 magicdian  staff    627200  9 27  2021 msvcr90.dll</span><br><span class="line">-rw-r-----  1 magicdian  staff     57724 11 13 15:48 platform.ini</span><br></pre></td></tr></table></figure>
+
+<p>获得到BIOS的bin文件后，我们需要读取里面的内容，可以使用UEFITool工具读取，软件仓库地址：<a target="_blank" rel="noopener" href="https://github.com/LongSoft/UEFITool">https://github.com/LongSoft/UEFITool</a></p>
+<p>下载UEFITool打开后，将isflash.bin拖入UEFITool后，界面如图</p>
+<p><img src="https://imgur.com/J31dIAc.jpg"></p>
+<p>点击Search，也可能点击不了，那就用快捷键打开搜索框（Win: Ctrl + F , Mac: Command + F）</p>
+<p><img src="https://imgur.com/S8hsCBH.jpg"></p>
+<p>我的机器CPU是Ryzen 6900HX，代号是Rembrandt，我们在搜索框里搜索这个代号即可，可以在下方的框里看到一个搜索结果（可能有些BIOS会搜出多个结果，就要每个结果都看看了）</p>
+<p><img src="https://imgur.com/4jdnBEi.jpg"></p>
+<p>点击搜索结果会跳转出一个”PE32 image section”，右键选中hex view</p>
+<p><img src="https://imgur.com/2hKa1P5.jpg"><br><img src="https://imgur.com/G8K7BDv.jpg"></p>
+<p>搜索的结果显示3BB76h，也就是表示对应Hex的3BB76处，我们在Hex显示框找到3BB76地址（好像没有快捷键跳转，只能慢慢往下找）<br><img src="https://imgur.com/SCqkfSP.jpg"><br>可以找到我们刚刚搜索的Rembrandt字符，这一串字符完整的结果应该是</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RembrandthPI-FP7 1.0.0.9b</span><br></pre></td></tr></table></figure>
+<p>后面的数字 <code>1.0.0.9b</code> 就是当前BIOS中Agesa的版本</p>
+<h1 id="引导进入UniversalAmdFormBrowser然后查看版本"><a href="#引导进入UniversalAmdFormBrowser然后查看版本" class="headerlink" title="引导进入UniversalAmdFormBrowser然后查看版本"></a>引导进入UniversalAmdFormBrowser然后查看版本</h1><p>这是一种可行的方式，但是我并不推荐使用这个方法，因为这个软件有bug，有可能会损坏戴尔的电脑。<br>UniversalAmdFormBrowser可以用来解锁AMD平台bios的隐藏功能，让用户微调PBO，内存等参数成为了可能。</p>
+<p>该软件的仓库地址在：<a target="_blank" rel="noopener" href="https://github.com/DavidS95/Smokeless_UMAF%EF%BC%8C">https://github.com/DavidS95/Smokeless_UMAF，</a><br>仓库的介绍页面也有相关警告</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Dell user(s) have reported that the normal bios will not load anymore after using this :</span><br><span class="line"></span><br><span class="line">Fix thanks to (BIT_GAM3R and the Gaming Laptop Mod Discord Comunity):</span><br><span class="line"></span><br><span class="line">Boot the tool, access the BootManager, delete the Misc Option, this should not be there, it is created by a bug. If you tried accessing the BootManager before... A proper fix will be pushed when ready</span><br><span class="line"></span><br><span class="line">Doesnt work on the 6000 series(Rembrant) versions of the Onexplayer, AOKZOE, and AYANEO devices</span><br></pre></td></tr></table></figure>
+<p>引导进这个软件菜单后，里面有一个选项是可以显示agesa版本的。</p>
+<p>如果对这个软件有兴趣，或者amd笔记本平台想超频的用户，可以自行去了解。</p>
+<p>一定要知晓使用这款软件有可能引起bios损坏导致无法开机，因此我也不会在这里写清楚具体应该怎么使用，有需求的用户请自己学习了解，并对自己负责。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%88%B4%E5%B0%94/" rel="tag"># 戴尔</a>
+              <a href="/tags/AMD/" rel="tag"># AMD</a>
+              <a href="/tags/AGESA/" rel="tag"># AGESA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/Shell%E7%BB%88%E7%AB%AF%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E5%91%BD%E4%BB%A4%E5%8E%86%E5%8F%B2%E8%AE%B0%E5%BD%95/" rel="prev" title="Shell终端快速搜索命令历史记录">
+      <i class="fa fa-chevron-left"></i> Shell终端快速搜索命令历史记录
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202404/%E7%94%B1ICMP%E5%BC%95%E5%87%BA%E5%AF%B9TCPIP%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B%E6%80%9D%E8%80%83/" rel="next" title="由ICMP引出对TCPIP网络模型思考">
+      由ICMP引出对TCPIP网络模型思考 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E5%8C%85BIOS%EF%BC%8C%E7%84%B6%E5%90%8E%E6%9F%A5%E8%AF%A2agesa%E7%89%88%E6%9C%AC%E3%80%90%E6%8E%A8%E8%8D%90%E3%80%91"><span class="nav-number">1.</span> <span class="nav-text">解包BIOS，然后查询agesa版本【推荐】</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%95%E5%AF%BC%E8%BF%9B%E5%85%A5UniversalAmdFormBrowser%E7%84%B6%E5%90%8E%E6%9F%A5%E7%9C%8B%E7%89%88%E6%9C%AC"><span class="nav-number">2.</span> <span class="nav-text">引导进入UniversalAmdFormBrowser然后查看版本</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
