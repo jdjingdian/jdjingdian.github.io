@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /aboutMe/
+Allow: /archives/
+Allow: /categories/
+Allow: /tags/
+Disallow: /js/
+Disallow: /css/
+Disallow: /fonts/
+Disallow: /vendors/
+Disallow: /fancybox/
+
+Sitemap: http://blog.magicdian.cn/sitemap.xml
+Sitemap: http://blog.magicdian.cn/baidusitemap.xml
