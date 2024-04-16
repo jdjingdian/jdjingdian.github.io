@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前情提要在之前的文章”在OpenMediaVault上配置NFS over RDMA“中，我提到了我对内网软硬件设计的架构。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NFS配合BTRFS的媒体下载播放组合拳">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="前情提要在之前的文章”在OpenMediaVault上配置NFS over RDMA“中，我提到了我对内网软硬件设计的架构。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/%E5%86%85%E7%BD%91%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+<meta property="article:published_time" content="2024-04-16T13:33:04.000Z">
+<meta property="article:modified_time" content="2024-04-16T13:34:36.672Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="服务器">
+<meta property="article:tag" content="NFS">
+<meta property="article:tag" content="BTRFS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/%E5%86%85%E7%BD%91%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>NFS配合BTRFS的媒体下载播放组合拳 | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          NFS配合BTRFS的媒体下载播放组合拳
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-16 21:33:04 / 修改时间：21:34:36" itemprop="dateCreated datePublished" datetime="2024-04-16T21:33:04+08:00">2024-04-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>在之前的文章”<strong>在OpenMediaVault上配置NFS over RDMA</strong>“中，我提到了我对内网软硬件设计的架构。</p>
+<span id="more"></span>
+
+<img src="/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/%E5%86%85%E7%BD%91%E6%9E%B6%E6%9E%84%E5%9B%BE.png" class="">
+
+<p>这样设计的原因是希望将各个业务模块拆分开来，方便维护，避免一个业务模块出错的时候引起整个系统崩溃。</p>
+<h1 id="需要解决什么问题？"><a href="#需要解决什么问题？" class="headerlink" title="需要解决什么问题？"></a>需要解决什么问题？</h1><p>我现在习惯通过BT&#x2F;PT站点下载视频媒体资源，PT的理念是大家互相帮助，下载资源后也要提供上传资源，这样其他人才能获取到相应的资源。所以资源下载完后继续保持软件持续进行上传。</p>
+<p>下载的资源多了，我们也就需要更大容量的存储空间，单一硬盘的空间终究是有限的，所以我们可能需要多块硬盘组合起来作为一个资源池。</p>
+<p>总的来说，需要解决以下的问题</p>
+<ul>
+<li>如何利用多个硬盘的空间</li>
+<li>如何管理这些硬盘空间</li>
+<li>如何尽可能减少磁盘空间的浪费</li>
+</ul>
+<h1 id="之前的方案介绍"><a href="#之前的方案介绍" class="headerlink" title="之前的方案介绍"></a>之前的方案介绍</h1><p>在此之前，我是通过<code>MergerFS</code>的方式来将多个磁盘合并，对于上层来说，<code>MergerFS</code>将多个磁盘中的文件组合到一个挂载点提供给用户，这样即便使用了多块硬盘，用户访问时，就像访问一个独立的分区一样，但磁盘空间是叠加的。</p>
+<p>使用这种方式时，如果任意一块盘损坏，也不会影响其他盘上的内容，这也是一开始我选用<code>MergerFS</code>的一个很重要的原因。</p>
+<p>但在实际使用中我发现，MergerFS会把文件打散存放在不同的硬盘上，对于目录来说，会在每个硬盘上创建一个同样层级关系的目录，但每个文件只会存在其中一个硬盘上，这就有可能导致有些文件东一个西一个，虽然<code>MergerFS</code>有提供不同的策略来存放新加入的文件，但总感觉后期维护的时候会比较麻烦。</p>
+<p>但放弃这个方案的最主要原因是，在使用Emby、Plex等媒体服务器软件时，它们有时会无法识别出存储在MergerFS上的媒体文件。</p>
+<p>曾经我是单独用一个RAID0阵列作为PT下载盘，下载完后通过脚本拷贝到<code>MergerFS</code>上，相当于每一个媒体文件我实际上都保存了两份，空间其实有比较大的浪费。</p>
+<p>而之所以要拷贝一份，是因为后续媒体服务器运行时，可能会对媒体的nfo信息修改，我不希望媒体服务器与pt下载的软件产生冲突。</p>
+<h1 id="当前方案"><a href="#当前方案" class="headerlink" title="当前方案"></a>当前方案</h1><ul>
+<li>NFS 4.2 + RDMA</li>
+<li>BTRFS</li>
+</ul>
+<p>NFS over RDMA可以提供更出色的性能，而必须指定使用4.2版本的NFS是因为，在这个版本中，NFS提供了<code>Server-side Copy</code>功能。换句话来说，如果我需要在NFS共享的目录中拷贝内容，相关的数据不需要流向NFS客户端再流回NFS服务端，所有拷贝操作可以在服务端自己完成，避免了拷贝时的带宽消耗。</p>
+<blockquote>
+<p>理论上NFS换成SMB也可以，SMB也有支持RDMA的能力，并且SMB也有服务端拷贝的功能，但实际配置起来感觉NFS简单很多，而且我的业务也都运行在Linux上，所以就直接选NFS了。</p>
+</blockquote>
+<p>而BTRFS是一个支持<code>CoW</code>（Copy on Write 写时复制）的文件系统，即复制文件时，并不会真正的创建一个新的空间用来保存这份文件，这份文件仍然指向原有的存储空间，而当文件产生修改的时候，才会消耗存储空间保存修改过后的文件。这样一来，我PT下载完后，保持原有的拷贝逻辑，但是不会额外占用一份空间，而当媒体服务器对nfo等信息修改时，才会对这些信息新开辟一个空间，而这些信息一般都比较小，额外报错一份修改后的并不会让硬盘空间有什么压力。</p>
+<p>并且，BTRFS支持组建RAID，后期也可以很方便地往BTRFS资源池中添加硬盘进行扩容。</p>
+<p>在扩容和利用磁盘空间这一块，其实跟MergerFS并没有分出本质的胜负，某种意义上来说，MergerFS单盘损毁不会影响其他硬盘，反而还略胜一筹。但考虑到CoW的特性，综合考虑下，我认为BTRFS更适合我的使用场景。</p>
+<p>另外，我仔细想了想，即便组RAID模式，有硬盘坏了，这些资源全都损坏丢失，我也没什么所谓，因为保存的基本都是已经观看过的视频媒体文件了，真有需要，重新下载一份就好了。RAID0模式相当于把一个文件拆成很多个区块，然后把这些区块分散保存到不同的硬盘上，可以提升读写性能，但当有物理磁盘损坏时，就会导致文件损坏且无法恢复。（假设有4块硬盘，一个文件拆分成a b c d四个部分，任意一块硬盘损坏后，这个文件其中一个部分就丢失了，因此文件相当于损毁了）</p>
+<p>但是怎么知道要重新下载那些文件呢？</p>
+<p>btrfs的RAID将数据拆分成了metadata、system和data三个部分，其中data部分是存储我们实际的数据的，而metadata和system中则保存了硬盘分区相关的信息。而我们可以将metadata、system部分以RAID1镜像模式运行，而data以RAID0条带运行。这样一来，即便有物理硬盘损坏，由于其他硬盘上有metadata和system部分的镜像数据，所以btrfs文件系统仍然可以以<em>降级</em>模式继续运行。</p>
+<p>当降级运行时，<strong>理论上</strong>我们仍然可以访问分区里的目录信息和文件名称等信息，这样我们就知道我们需要重新下载哪些数据了，然后替换掉损坏的硬盘后，重新下载数据就好了。</p>
+<p>因此，这套方案有以下特点：</p>
+<ol>
+<li>使用NFS over RDMA，性能相比传统基于TCPIP协议栈的文件共享性能更高</li>
+<li>NFS指定使用4.2版本，实现<code>Server-side Copy</code>，减少网络传输</li>
+<li>文件服务器使用BTRFS文件系统，支持写时复制，复制文件时可以通过<code>cp --reflink=always</code>方式来快速复制创建引用关系，提高硬盘空间利用率</li>
+<li>物理硬盘损坏时，仍然能获取到目录结构和文件名等信息。</li>
+</ol>
+<h1 id="配置BTRFS与扩容"><a href="#配置BTRFS与扩容" class="headerlink" title="配置BTRFS与扩容"></a>配置BTRFS与扩容</h1><p>我先通过OpenMediaVault WEB控制台创建了一个双盘RAID0的BTRFS文件系统</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">root@openmediavault:~# btrfs filesystem show</span><br><span class="line">Label: none  uuid: 5d347e39-e8b0-4ddc-b159-a7cb00649068</span><br><span class="line">        Total devices 2 FS bytes used 144.00KiB</span><br><span class="line">        devid    1 size 5.46TiB used 1.51GiB path /dev/sdc</span><br><span class="line">        devid    2 size 5.46TiB used 1.51GiB path /dev/sde</span><br></pre></td></tr></table></figure>
+
+<p>在WEB上似乎没有看到添加盘到已有文件系统的选项，因此使用命令手动添加</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Disk /dev/sdg: 5.46 TiB, 6001175126016 bytes, 11721045168 sectors</span><br><span class="line">Disk model: ST6000NM0034    </span><br><span class="line">Units: sectors of 1 * 512 = 512 bytes</span><br><span class="line">Sector size (logical/physical): 512 bytes / 4096 bytes</span><br><span class="line">I/O size (minimum/optimal): 4096 bytes / 4096 bytes</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Disk /dev/sdi: 5.46 TiB, 6001175126016 bytes, 11721045168 sectors</span><br><span class="line">Disk model: ST6000NM0034   X</span><br><span class="line">Units: sectors of 1 * 512 = 512 bytes</span><br><span class="line">Sector size (logical/physical): 512 bytes / 4096 bytes</span><br><span class="line">I/O size (minimum/optimal): 4096 bytes / 4096 bytes</span><br></pre></td></tr></table></figure>
+
+<p>另外两个6T的硬盘符为<code>/dev/sdg</code> 和<code>/dev/sdi</code>，现有的btrfs文件系统实际挂载点在<code>/srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@openmediavault:~<span class="comment"># df -h | grep 5d347e39-e8b0-4ddc-b159-a7cb00649068</span></span><br><span class="line">/dev/sdc                                            11T  3.7M   11T   1% /srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068</span><br></pre></td></tr></table></figure>
+<p>使用如下命令添加硬盘到已有的btrfs文件系统</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068</span><br><span class="line">root@openmediavault:~<span class="comment"># btrfs device add /dev/sdg /srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068</span></span><br><span class="line">root@openmediavault:~<span class="comment"># btrfs filesystem show</span></span><br><span class="line">Label: none  uuid: 5d347e39-e8b0-4ddc-b159-a7cb00649068</span><br><span class="line">        Total devices 3 FS bytes used 144.00KiB</span><br><span class="line">        devid    1 size 5.46TiB used 1.51GiB path /dev/sdc</span><br><span class="line">        devid    2 size 5.46TiB used 1.51GiB path /dev/sde</span><br><span class="line">        devid    3 size 5.46TiB used 0.00B path /dev/sdg</span><br></pre></td></tr></table></figure>
+
+<p>可以看到SDG已经添加到btrfs文件系统中了，同样方法继续添加SDI</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">root@openmediavault:~<span class="comment"># btrfs filesystem show</span></span><br><span class="line">Label: none  uuid: 5d347e39-e8b0-4ddc-b159-a7cb00649068</span><br><span class="line">        Total devices 4 FS bytes used 144.00KiB</span><br><span class="line">        devid    1 size 5.46TiB used 1.51GiB path /dev/sdc</span><br><span class="line">        devid    2 size 5.46TiB used 1.51GiB path /dev/sde</span><br><span class="line">        devid    3 size 5.46TiB used 0.00B path /dev/sdg</span><br><span class="line">        devid    4 size 5.46TiB used 0.00B path /dev/sdi</span><br></pre></td></tr></table></figure>
+<p>可以看到SDC和SDE已经使用了1.51GiB的空间</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">root@openmediavault:~<span class="comment"># btrfs fi usage /srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068</span></span><br><span class="line">Overall:</span><br><span class="line">    Device size:                  21.83TiB</span><br><span class="line">    Device allocated:              3.02GiB</span><br><span class="line">    Device unallocated:           21.83TiB</span><br><span class="line">    Device missing:                  0.00B</span><br><span class="line">    Device slack:                    0.00B</span><br><span class="line">    Used:                        144.00KiB</span><br><span class="line">    Free (estimated):             21.83TiB      (min: 21.83TiB)</span><br><span class="line">    Free (statfs, <span class="built_in">df</span>):            21.83TiB</span><br><span class="line">    Data ratio:                       1.00</span><br><span class="line">    Metadata ratio:                   1.00</span><br><span class="line">    Global reserve:                3.50MiB      (used: 0.00B)</span><br><span class="line">    Multiple profiles:                  no</span><br><span class="line"></span><br><span class="line">Data,RAID0: Size:2.00GiB, Used:0.00B (0.00%)</span><br><span class="line">   /dev/sdc        1.00GiB</span><br><span class="line">   /dev/sde        1.00GiB</span><br><span class="line"></span><br><span class="line">Metadata,RAID0: Size:1.00GiB, Used:128.00KiB (0.01%)</span><br><span class="line">   /dev/sdc      512.00MiB</span><br><span class="line">   /dev/sde      512.00MiB</span><br><span class="line"></span><br><span class="line">System,RAID0: Size:16.00MiB, Used:16.00KiB (0.10%)</span><br><span class="line">   /dev/sdc        8.00MiB</span><br><span class="line">   /dev/sde        8.00MiB</span><br><span class="line"></span><br><span class="line">Unallocated:</span><br><span class="line">   /dev/sdc        5.46TiB</span><br><span class="line">   /dev/sde        5.46TiB</span><br><span class="line">   /dev/sdg        5.46TiB</span><br><span class="line">   /dev/sdi        5.46TiB</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到，目前metadata和system处于raid0状态，为了能够掉盘后仍然能看到分区和内部文件信息（虽然文件实际已经损坏），我们需要将metadata改为DUP或RAID1模式</p>
+<ul>
+<li>DUP：在一个设备上存储多份</li>
+<li>RAID-1：在多个设备上存储多份</li>
+</ul>
+<p>我现在这种多设备的情况，metadata应该改为使用RAID1</p>
+<p>因此使用如下命令配置更新btrfs</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">btrfs balance start -f -sconvert=RAID1c4 -mconvert=RAID1c4 -dconvert=RAID0 /srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068</span><br></pre></td></tr></table></figure>
+
+<p>上面的意思就是，将metadata部分内容以RAID1c4模式存储(即一份数据复制4份分别存储在4个设备上)，然后data部分以raid0模式运行，运行完成后再次检查</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">root@openmediavault:/srv/dev-disk-by-uuid-5d347e39-e8b0-4ddc-b159-a7cb00649068<span class="comment"># btrfs fi usage .</span></span><br><span class="line">Overall:</span><br><span class="line">    Device size:                  21.83TiB</span><br><span class="line">    Device allocated:             12.12GiB</span><br><span class="line">    Device unallocated:           21.82TiB</span><br><span class="line">    Device missing:                  0.00B</span><br><span class="line">    Device slack:                    0.00B</span><br><span class="line">    Used:                          5.02GiB</span><br><span class="line">    Free (estimated):             21.82TiB      (min: 5.46TiB)</span><br><span class="line">    Free (statfs, <span class="built_in">df</span>):            21.82TiB</span><br><span class="line">    Data ratio:                       1.00</span><br><span class="line">    Metadata ratio:                   4.00</span><br><span class="line">    Global reserve:                5.72MiB      (used: 0.00B)</span><br><span class="line">    Multiple profiles:                  no</span><br><span class="line"></span><br><span class="line">Data,RAID0: Size:8.00GiB, Used:5.00GiB (62.50%)</span><br><span class="line">   /dev/sdc        2.00GiB</span><br><span class="line">   /dev/sde        2.00GiB</span><br><span class="line">   /dev/sdg        2.00GiB</span><br><span class="line">   /dev/sdi        2.00GiB</span><br><span class="line"></span><br><span class="line">Metadata,RAID1C4: Size:1.00GiB, Used:6.17MiB (0.60%)</span><br><span class="line">   /dev/sdc        1.00GiB</span><br><span class="line">   /dev/sde        1.00GiB</span><br><span class="line">   /dev/sdg        1.00GiB</span><br><span class="line">   /dev/sdi        1.00GiB</span><br><span class="line"></span><br><span class="line">System,RAID1C4: Size:32.00MiB, Used:16.00KiB (0.05%)</span><br><span class="line">   /dev/sdc       32.00MiB</span><br><span class="line">   /dev/sde       32.00MiB</span><br><span class="line">   /dev/sdg       32.00MiB</span><br><span class="line">   /dev/sdi       32.00MiB</span><br><span class="line"></span><br><span class="line">Unallocated:</span><br><span class="line">   /dev/sdc        5.45TiB</span><br><span class="line">   /dev/sde        5.45TiB</span><br><span class="line">   /dev/sdg        5.45TiB</span><br><span class="line">   /dev/sdi        5.45TiB</span><br></pre></td></tr></table></figure>
+
+
+
+<p>用FIO跑个分</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">fio Disk Speed Tests (Mixed R/W 50/50) (Partition 192.168.4.23:/MEDIA_GROUP):</span><br><span class="line">---------------------------------</span><br><span class="line">Block Size | 4k            (IOPS) | 64k           (IOPS)</span><br><span class="line">  ------   | ---            ----  | ----           ---- </span><br><span class="line">Read       | 1.05 MB/s      (263) | 11.74 MB/s     (183)</span><br><span class="line">Write      | 1.08 MB/s      (271) | 12.27 MB/s     (191)</span><br><span class="line">Total      | 2.14 MB/s      (534) | 24.02 MB/s     (374)</span><br><span class="line">           |                      |                     </span><br><span class="line">Block Size | 512k          (IOPS) | 1m            (IOPS)</span><br><span class="line">  ------   | ---            ----  | ----           ---- </span><br><span class="line">Read       | 78.24 MB/s     (152) | 136.48 MB/s    (133)</span><br><span class="line">Write      | 82.39 MB/s     (160) | 145.57 MB/s    (142)</span><br><span class="line">Total      | 160.63 MB/s    (312) | 282.06 MB/s    (275)</span><br></pre></td></tr></table></figure>
+<p>这个性能看起来一般般</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag"># 服务器</a>
+              <a href="/tags/NFS/" rel="tag"># NFS</a>
+              <a href="/tags/BTRFS/" rel="tag"># BTRFS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/" rel="prev" title="在OpenMediaVault上配置NFS over RDMA">
+      <i class="fa fa-chevron-left"></i> 在OpenMediaVault上配置NFS over RDMA
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202404/eBPF%E5%88%9D%E8%A7%81/" rel="next" title="eBPF初见">
+      eBPF初见 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9C%80%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">需要解决什么问题？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B9%8B%E5%89%8D%E7%9A%84%E6%96%B9%E6%A1%88%E4%BB%8B%E7%BB%8D"><span class="nav-number">3.</span> <span class="nav-text">之前的方案介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BD%93%E5%89%8D%E6%96%B9%E6%A1%88"><span class="nav-number">4.</span> <span class="nav-text">当前方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEBTRFS%E4%B8%8E%E6%89%A9%E5%AE%B9"><span class="nav-number">5.</span> <span class="nav-text">配置BTRFS与扩容</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

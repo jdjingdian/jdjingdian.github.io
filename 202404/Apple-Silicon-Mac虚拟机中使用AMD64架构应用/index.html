@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前情提要我现在工作有两台电脑，一台M1 Pro处理器的Macbook Pro，一台12700K CPU的台式机，macbook连到两个显示器，作为我的显示前端，台式机以无头模式运行，作为高性能后端。平常要用Windows的时候就用远程桌面的方式连接。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apple Silicon Mac虚拟机中使用AMD64架构应用">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/Apple-Silicon-Mac%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%AD%E4%BD%BF%E7%94%A8AMD64%E6%9E%B6%E6%9E%84%E5%BA%94%E7%94%A8/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="前情提要我现在工作有两台电脑，一台M1 Pro处理器的Macbook Pro，一台12700K CPU的台式机，macbook连到两个显示器，作为我的显示前端，台式机以无头模式运行，作为高性能后端。平常要用Windows的时候就用远程桌面的方式连接。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gd-hbimg.huaban.com/d73dccec9b38de5463f3e91df31abf3aac5832fea003-h7c4Sg_fw658">
+<meta property="og:image" content="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg3.doubanio.com%2Fview%2Fgroup_topic%2Fl%2Fpublic%2Fp438095830.jpg&refer=http%3A%2F%2Fimg3.doubanio.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1707380186&t=c806b0a9573283f1fc421ce283b4ec14">
+<meta property="og:image" content="https://pics6.baidu.com/feed/6c224f4a20a44623461026dfb99567070ef3d7f1.png?token=7aa661a418c924c9a395ed72cc49c075">
+<meta property="article:published_time" content="2024-04-16T13:11:53.000Z">
+<meta property="article:modified_time" content="2024-04-16T13:16:07.467Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="Apple Silicon">
+<meta property="article:tag" content="虚拟机">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gd-hbimg.huaban.com/d73dccec9b38de5463f3e91df31abf3aac5832fea003-h7c4Sg_fw658">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/Apple-Silicon-Mac%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%AD%E4%BD%BF%E7%94%A8AMD64%E6%9E%B6%E6%9E%84%E5%BA%94%E7%94%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Apple Silicon Mac虚拟机中使用AMD64架构应用 | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/Apple-Silicon-Mac%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%AD%E4%BD%BF%E7%94%A8AMD64%E6%9E%B6%E6%9E%84%E5%BA%94%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Apple Silicon Mac虚拟机中使用AMD64架构应用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-16 21:11:53 / 修改时间：21:16:07" itemprop="dateCreated datePublished" datetime="2024-04-16T21:11:53+08:00">2024-04-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>我现在工作有两台电脑，一台M1 Pro处理器的Macbook Pro，一台12700K CPU的台式机，macbook连到两个显示器，作为我的显示前端，台式机以无头模式运行，作为高性能后端。平常要用Windows的时候就用远程桌面的方式连接。</p>
+<span id="more"></span>
+<p>台式机安装的系统是Proxmox VE 8.0.4，在这个系统上通过KVM虚拟化运行着一个Ubuntu Server和一个Windows 11，Ubuntu系统主要用于平常AOSP系统的编译，虽然公司也有提供一个24核 32G内存的堡垒机作为编译服务器，但是感觉台式机的单核性能和固态硬盘速度更快，实际编译时比堡垒机更快，所以平常堡垒机基本闲置。同时又因为有给手机刷机的需求，要用高通提供的qfil软件（高通好像也有提供linux版本的qfil，但是我的ubuntu没有装桌面环境，也懒得去记刷机命令了），为了能够刷机，台式机的USB控制器直通到了Windows系统里，因此只有Windows系统能使用USB连接</p>
+<p>最近工作中经常要跑谷歌要求的测试，主要是为了GMS认证相关的，谷歌提供的工具只能在Linux上跑，并且有些测试必须在USB ADB模式才能跑，在尝试本文的技术之前，我每次跑测试，都需要先将Windows和Ubuntu关机，然后将直通的PCIE USB控制器切换到Ubuntu里，然后开Ubuntu跑测试，跑完之后关闭Ubuntu，再将USB切换到Windows，再将两个系统开机，非常繁琐。</p>
+<h1 id="其他可行方案"><a href="#其他可行方案" class="headerlink" title="其他可行方案"></a>其他可行方案</h1><h2 id="台式机只安装Ubuntu，macbook再跑一个ARM64结构的Windows虚拟机"><a href="#台式机只安装Ubuntu，macbook再跑一个ARM64结构的Windows虚拟机" class="headerlink" title="台式机只安装Ubuntu，macbook再跑一个ARM64结构的Windows虚拟机"></a>台式机只安装Ubuntu，macbook再跑一个ARM64结构的Windows虚拟机</h2><p>这种方案实现起来确实比较简单，但高通的工具写的跟个💩一样，在ARM64虚拟机里跑再转译x86&#x2F;64，估计很难顶</p>
+<h2 id="使用USBIP的方式将Windows里的USB设备给Ubuntu使用"><a href="#使用USBIP的方式将Windows里的USB设备给Ubuntu使用" class="headerlink" title="使用USBIP的方式将Windows里的USB设备给Ubuntu使用"></a>使用USBIP的方式将Windows里的USB设备给Ubuntu使用</h2><p>这种方案以前玩WSL的时候有使用过，确实比较方便，但是不知道什么原因，在我现在的架构下没跑起来，并且谷歌测试的时候会将手机重启，这种情况USBIP有识别不到设备的可能</p>
+<h2 id="台式机只安装Windows，通过WSL运行Ubuntu"><a href="#台式机只安装Windows，通过WSL运行Ubuntu" class="headerlink" title="台式机只安装Windows，通过WSL运行Ubuntu"></a>台式机只安装Windows，通过WSL运行Ubuntu</h2><p>理论上USB的问题解决了，但是平常台式机主要用来编译系统，嵌套WSL来编译担心性能损失比较大</p>
+<p>最主要的是，方案1和方案3，台式机都是使用bare metal的安装方式，工作时如果不小心配置错了导致系统无法正常运行的话，不在公司都不太好处理，而用KVM虚拟化的方案，我远程也可以控制虚拟系统的开关机，甚至来个远程重装系统也不是大问题。</p>
+<h2 id="在mac上通过UTM-qemu模拟x86-64架构的系统"><a href="#在mac上通过UTM-qemu模拟x86-64架构的系统" class="headerlink" title="在mac上通过UTM qemu模拟x86_64架构的系统"></a>在mac上通过UTM qemu模拟x86_64架构的系统</h2><p>虽然说不是不能用吧，但是因为是软件纯模拟，性能太差了……<br>[<img src="https://gd-hbimg.huaban.com/d73dccec9b38de5463f3e91df31abf3aac5832fea003-h7c4Sg_fw658" alt="又不是不能用”表情包进化史，越来越抽象了"></p>
+<h1 id="抽象的解决方案"><a href="#抽象的解决方案" class="headerlink" title="抽象的解决方案"></a>抽象的解决方案</h1><p>敲代码、飞书、上网、go fishing：macOS<br>刷机、看高通日志：台式机的Windows虚拟机<br>高负载编译：台式机的Ubuntu虚拟机<br>跑VTS测试：macOS上Ubuntu虚拟机</p>
+<p>解决方案如上，这样总体日常我继续使用我习惯的macOS，台式机的主要任务还是在虚拟的Ubuntu上跑编译，时不时远程桌面到Windows看日志和刷机。VTS测试的周期并不频繁，只是会在项目的中后期经常使用，用的时候再在macOS上启动Ubuntu虚拟机并直通USB设备即可。</p>
+<p>但是现在mac使用apple silicon架构的cpu，基于arm64，而谷歌的vts测试工具是按amd64架构发布的，macOS上虚拟化出来的Ubuntu肯定是不能直接运行的。</p>
+<p>好在macOS上有一个叫Rosetta的软件，这个软件是作为一个转译器伴随apple silicon设备发布的，它可以让曾经为Intel架构的mac软件，在不需要开发者重新编译打包的情况下，直接在新架构的mac上运行。</p>
+<p>在macOS 13版本之后，如果虚拟机使用’Apple Hypervisor’作为虚拟机后端框架，就可以在Linux虚拟机上，使用Rosetta来运行x86_64架构的可执行程序，官方的链接：<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/virtualization/running_intel_binaries_in_linux_vms_with_rosetta">https://developer.apple.com/documentation/virtualization/running_intel_binaries_in_linux_vms_with_rosetta</a></p>
+<p>本文主要参考：<a target="_blank" rel="noopener" href="https://mybyways.com/blog/using-rosetta-in-a-utm-linux-vm-with-docker-on-apple-silicon">https://mybyways.com/blog/using-rosetta-in-a-utm-linux-vm-with-docker-on-apple-silicon</a></p>
+<h2 id="安装Apple-Hypervisor后端的虚拟机"><a href="#安装Apple-Hypervisor后端的虚拟机" class="headerlink" title="安装Apple Hypervisor后端的虚拟机"></a>安装Apple Hypervisor后端的虚拟机</h2><p>如果从来没有使用过Rosetta的话，可能需要先进行安装<br>运行命令：<code>softwareupdate --install-rosetta</code></p>
+<p>本文使用UTM来创建虚拟机，本来是想直接将现有的QEMU后端的虚拟机改为Apple Hypervisor框架的，但似乎没有找到相关的选项，于是就重新装一个<br>首先创建的时候要选择虚拟化</p>
+<p>然后选择Linux系统</p>
+<p>然后选择使用Use Apple Hypervisor，勾选后会出现附加选项的弹框，勾选Enable Rosetta</p>
+<p>然后正常选择需要启动的ISO镜像完成安装即可</p>
+<h1 id="配置Rosetta与APT源"><a href="#配置Rosetta与APT源" class="headerlink" title="配置Rosetta与APT源"></a>配置Rosetta与APT源</h1><ol>
+<li>创建Rosetta挂载的文件 <code>sudo mkdir /media/rosetta</code></li>
+<li>挂载Rosetta <code>sudo mount -t virtiofs rosetta /media/rosetta</code></li>
+<li>安装binfmt <code>sudo apt install binfmt-support</code> 这个工具可以帮助Linux识别二进制的格式</li>
+<li>配置binfmt，对于x86_64架构的应用使用Rosetta运行<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo /usr/sbin/update-binfmts --install rosetta /media/rosetta/rosetta \</span><br><span class="line"> --magic &quot;\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x3e\x00&quot; \</span><br><span class="line"> --mask &quot;\xff\xff\xff\xff\xff\xfe\xfe\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff&quot; \</span><br><span class="line"> --credentials yes --preserve no --fix-binary yes</span><br></pre></td></tr></table></figure></li>
+<li>配置Rosetta自动挂载 <code>sudo vi /etc/fstab</code> 在行尾添加内容<code>rosetta /media/rosetta virtiofs ro,nofail 0 0</code> ，然后输入<code>:wq</code> 保存退出</li>
+</ol>
+<p>现在重启系统后，使用<code>df -h</code> 应该可以看到Rosetta的挂载信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">magicdian@mdrosettaserver:~$ df -h</span><br><span class="line">Filesystem                         Size  Used Avail Use% Mounted on</span><br><span class="line">...省略</span><br><span class="line">rosetta                            1.9T  1.3T  552G  71% /media/rosetta</span><br><span class="line">...省略</span><br></pre></td></tr></table></figure>
+
+<p>但是此时系统还没有x86_64的软件库，因此我们要更新apt源，编辑<code>/etc/apt/source.list</code>添加以下信息</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted</span><br><span class="line">deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted</span><br><span class="line">deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy universe</span><br><span class="line">deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates universe</span><br><span class="line">deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy multiverse</span><br><span class="line">deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates multiverse</span><br><span class="line">deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main restricted</span><br><span class="line">deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security universe</span><br><span class="line">deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security multiverse</span><br></pre></td></tr></table></figure>
+<p>这样apt就知道要从这些地方获取amd64架构的软件包了</p>
+<h2 id="ADB咋跑不起来？"><a href="#ADB咋跑不起来？" class="headerlink" title="ADB咋跑不起来？"></a>ADB咋跑不起来？</h2><p>兴高采烈地配置完第二步，到谷歌下载了个最新版本的platform-tools，adb启动，结果报错</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rosetta error: failed to open elf at /lib64/ld-linux-x86-64.so.2</span><br></pre></td></tr></table></figure>
+<p>大概意思就是找不到ld-linux-x86-64.so.2这个库，谷歌了一圈感觉没有讲怎么解决，但我猜测应该是系统没有带这个库导致的，安装即可，于是去搜了下发现这个库是包含在libc6这个软件包里的，那很明显安装amd64架构的libc6就好了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">magicdian@mdrosettaserver:~$ apt list libc6</span><br><span class="line">Listing... Done</span><br><span class="line">libc6/jammy-updates,jammy-security,now 2.35-0ubuntu3.5 amd64 [installed]</span><br><span class="line">libc6/jammy-updates,jammy-security,now 2.35-0ubuntu3.5 arm64 [installed,automatic]</span><br></pre></td></tr></table></figure>
+<p>通过apt list命令查找libc6软件包，可以看到有两种架构，我们使用<code>sudo apt-get install libc6:amd64</code> 来安装就可以了</p>
+<p>然后adb就可以正常启动了</p>
+<h2 id="Geekbench启动"><a href="#Geekbench启动" class="headerlink" title="Geekbench启动"></a>Geekbench启动</h2><p>搞定了Rosetta肯定还是要跑个分的，结果不算特别好，但也不差，GB6单核心1023分，多核心5544分，相比原生macOS下的跑分，差不多打了5折…<br>不过还是比QEMU纯软件模拟的方式要高的，纯软模拟的x86_64直接跑不了GB6，超时结束了。</p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>文章写完了，为什么还要后记呢<br>因为抽象的苹果虽然提供了Hypervisor框架，但是这个框架似乎并没有考虑到虚拟机直通USB设备的需求，所以我折腾了大半天，x86的adb是跑起来了，但是并没有usb设备给我连接，实际上我除了以x86_64的架构跑了个分，并没有产生实际的应用，拜了个拜<br><img src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg3.doubanio.com%2Fview%2Fgroup_topic%2Fl%2Fpublic%2Fp438095830.jpg&refer=http%3A%2F%2Fimg3.doubanio.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1707380186&t=c806b0a9573283f1fc421ce283b4ec14" title="点击查看图片来源"><br><img src="https://pics6.baidu.com/feed/6c224f4a20a44623461026dfb99567070ef3d7f1.png?token=7aa661a418c924c9a395ed72cc49c075"></p>
+<h2 id="Apple-Hypervisor框架不支持USB直通？"><a href="#Apple-Hypervisor框架不支持USB直通？" class="headerlink" title="Apple Hypervisor框架不支持USB直通？"></a>Apple Hypervisor框架不支持USB直通？</h2><p>一开始使用UTM工具来创建虚拟机，发现没有配置USB设备的选项，后来又尝试了Parallels Desktop这款付费虚拟机软件，发现虚拟机创建后，可以随时打开或关闭Rosetta的支持，并且安装Parallels tools后，会自动挂载Rosetta工具，只需要自己配置一下AMD64架构的源，安装一下libc6，基本就能用了。</p>
+<p>到底是Apple Hypervisor本身就支持USB直通，还是Parallels Desktop这款付费软件额外做了一些开发，我不得而知，不过在github上能找到一个破解rosetta的库，从而可以在任何arm64的linux上运行AMD64的软件，<a target="_blank" rel="noopener" href="https://github.com/CathyKMeow/rosetta-linux-asahi">https://github.com/CathyKMeow/rosetta-linux-asahi</a> ，所以理论上来说，树莓派以及rockchip等芯片的开发板，也可以利用Rosetta。</p>
+<h2 id="Parallels-Desktop下的Rosetta使用情况"><a href="#Parallels-Desktop下的Rosetta使用情况" class="headerlink" title="Parallels Desktop下的Rosetta使用情况"></a>Parallels Desktop下的Rosetta使用情况</h2><p>也同样进行了跑分，跑分比UTM略弱一点点，考虑是误差吧，想尝试跑谷歌的VTS测试工具，但是报错，暂时没想到怎么解决，不过考虑到重新读VTS测试工具的说明书后，发现VTS测试工具可以直接跑在macOS上，我想我应该不会继续钻牛角尖用Rosetta来跑了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">Android Vendor Test Suite 14_r3 (11237927)</span><br><span class="line">Use &quot;help&quot; or &quot;help all&quot; to get more information on running commands.</span><br><span class="line">This command is not for general use and should only be run as the result of a call to</span><br><span class="line">ProcessBuilder.start() or Runtime.exec() in a java application</span><br><span class="line">This command is not for general use and should only be run as the result of a call to</span><br><span class="line">ProcessBuilder.start() or Runtime.exec() in a java application</span><br><span class="line">01-09 11:37:52 E/adb: Cannot run program &quot;adb&quot;: error=0, Failed to exec spawn helper: pid: 8497, exit value: 1</span><br><span class="line">Console received an unexpected exception (shown below); shutting down TF.</span><br><span class="line">java.lang.IllegalArgumentException: java.io.IOException: Cannot run program &quot;adb&quot;: error=0, Failed to exec spawn helper: pid: 8497, exit value: 1</span><br><span class="line">	at com.android.ddmlib.AndroidDebugBridge.&lt;init&gt;(AndroidDebugBridge.java:875)</span><br><span class="line">	at com.android.ddmlib.AndroidDebugBridge.createBridge(AndroidDebugBridge.java:614)</span><br><span class="line">	at com.android.ddmlib.AndroidDebugBridge.createBridge(AndroidDebugBridge.java:566)</span><br><span class="line">	at com.android.tradefed.device.AndroidDebugBridgeWrapper.init(AndroidDebugBridgeWrapper.java:83)</span><br><span class="line">	at com.android.tradefed.device.DeviceManager.startAdbBridgeAndDependentServices(DeviceManager.java:324)</span><br><span class="line">	at com.android.tradefed.device.DeviceManager.init(DeviceManager.java:291)</span><br><span class="line">	at com.android.tradefed.device.DeviceManager.init(DeviceManager.java:220)</span><br><span class="line">	at com.android.tradefed.device.DeviceManager.init(DeviceManager.java:210)</span><br><span class="line">	at com.android.tradefed.command.CommandScheduler.initDeviceManager(CommandScheduler.java:1145)</span><br><span class="line">	at com.android.tradefed.command.CommandScheduler.start(CommandScheduler.java:1123)</span><br><span class="line">	at com.android.tradefed.command.Console.run(Console.java:1134)</span><br><span class="line">	at com.android.compatibility.common.tradefed.command.CompatibilityConsole.run(CompatibilityConsole.java:104)</span><br><span class="line">Caused by: java.io.IOException: Cannot run program &quot;adb&quot;: error=0, Failed to exec spawn helper: pid: 8497, exit value: 1</span><br><span class="line">	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1143)</span><br><span class="line">	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1073)</span><br><span class="line">	at com.android.ddmlib.AndroidDebugBridge.lambda$runAdb$0(AndroidDebugBridge.java:954)</span><br><span class="line">	at java.base/java.lang.Thread.run(Thread.java:833)</span><br><span class="line">Caused by: java.io.IOException: error=0, Failed to exec spawn helper: pid: 8497, exit value: 1</span><br><span class="line">	at java.base/java.lang.ProcessImpl.forkAndExec(Native Method)</span><br><span class="line">	at java.base/java.lang.ProcessImpl.&lt;init&gt;(ProcessImpl.java:314)</span><br><span class="line">	at java.base/java.lang.ProcessImpl.start(ProcessImpl.java:244)</span><br><span class="line">	at java.base/java.lang.ProcessBuilder.start(ProcessBuilder.java:1110)</span><br><span class="line">	... 3 more</span><br><span class="line">Exception in thread &quot;TfConsole&quot; java.lang.IllegalStateException: start() must be called before this method</span><br><span class="line">	at com.android.tradefed.command.CommandScheduler.assertStarted(CommandScheduler.java:2553)</span><br><span class="line">	at com.android.tradefed.command.CommandScheduler.doShutdown(CommandScheduler.java:2140)</span><br><span class="line">	at com.android.tradefed.command.CommandScheduler.shutdown(CommandScheduler.java:2129)</span><br><span class="line">	at com.android.tradefed.command.ICommandScheduler.shutdown(ICommandScheduler.java:171)</span><br><span class="line">	at com.android.tradefed.command.Console.run(Console.java:1201)</span><br><span class="line">	at com.android.compatibility.common.tradefed.command.CompatibilityConsole.run(CompatibilityConsole.java:104)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Rosetta-on-Linux，还有什么玩法？"><a href="#Rosetta-on-Linux，还有什么玩法？" class="headerlink" title="Rosetta on Linux，还有什么玩法？"></a>Rosetta on Linux，还有什么玩法？</h2><p>目前看到比较多的是用来运行AMD64架构的Docker镜像，不过我感觉常用的工具软件现在基本也会有arm架构的版本，在DockerHub上大概搜了一下</p>
+<ul>
+<li>WordPress</li>
+<li>Jenkins</li>
+<li>Gitea</li>
+<li>Emby</li>
+<li>Plex</li>
+<li>Vaultwarden</li>
+</ul>
+<p>这些我比较常用的镜像都是有arm64的版本的，所以感觉即便Linux上有Rosetta，好像实际用处也不大，可能主要还是针对一些，停更了比较长时间，但是仍然非常好用的软件工具，让他们可以在新架构下直接部署。搜索的过程中确实也看到一些没有arm64的镜像，所以有rosetta的话，arm linux也许也能用的更顺手吧</p>
+<p>哦，还想试试微信</p>
+<p>然后我打开了微信官网，发现根本就没有Linux版本的安装包</p>
+<p>在DockerHub的images列表里帧的找了喝酒，才找到——confluence的镜像是没支持arm64的，最终尝试使用8.5-ubuntu-jdk17这个版本成功跑起来。本来以为能很轻松找到不支持arm64的镜像，没想到找了半天……这样一来，确实也想不到什么更合理的场景来使用转译了…</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Apple-Silicon/" rel="tag"># Apple Silicon</a>
+              <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/" rel="tag"># 虚拟机</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/%E4%BD%BF%E7%94%A8%E8%8B%B9%E6%9E%9C%E7%9A%84Rosetta%E5%9C%A8Linux%E4%B8%8A%E8%B7%A8%E6%9E%B6%E6%9E%84%E8%BF%90%E8%A1%8C%E5%BA%94%E7%94%A8/" rel="prev" title="使用苹果的Rosetta在Linux上跨架构运行应用">
+      <i class="fa fa-chevron-left"></i> 使用苹果的Rosetta在Linux上跨架构运行应用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202404/%E4%BD%BF%E7%94%A8Docker%E9%9A%94%E7%A6%BBeasyconnect/" rel="next" title="使用Docker隔离easyconnect">
+      使用Docker隔离easyconnect <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%8F%AF%E8%A1%8C%E6%96%B9%E6%A1%88"><span class="nav-number">2.</span> <span class="nav-text">其他可行方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%B0%E5%BC%8F%E6%9C%BA%E5%8F%AA%E5%AE%89%E8%A3%85Ubuntu%EF%BC%8Cmacbook%E5%86%8D%E8%B7%91%E4%B8%80%E4%B8%AAARM64%E7%BB%93%E6%9E%84%E7%9A%84Windows%E8%99%9A%E6%8B%9F%E6%9C%BA"><span class="nav-number">2.1.</span> <span class="nav-text">台式机只安装Ubuntu，macbook再跑一个ARM64结构的Windows虚拟机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8USBIP%E7%9A%84%E6%96%B9%E5%BC%8F%E5%B0%86Windows%E9%87%8C%E7%9A%84USB%E8%AE%BE%E5%A4%87%E7%BB%99Ubuntu%E4%BD%BF%E7%94%A8"><span class="nav-number">2.2.</span> <span class="nav-text">使用USBIP的方式将Windows里的USB设备给Ubuntu使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%B0%E5%BC%8F%E6%9C%BA%E5%8F%AA%E5%AE%89%E8%A3%85Windows%EF%BC%8C%E9%80%9A%E8%BF%87WSL%E8%BF%90%E8%A1%8CUbuntu"><span class="nav-number">2.3.</span> <span class="nav-text">台式机只安装Windows，通过WSL运行Ubuntu</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8mac%E4%B8%8A%E9%80%9A%E8%BF%87UTM-qemu%E6%A8%A1%E6%8B%9Fx86-64%E6%9E%B6%E6%9E%84%E7%9A%84%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.4.</span> <span class="nav-text">在mac上通过UTM qemu模拟x86_64架构的系统</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%BD%E8%B1%A1%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">抽象的解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Apple-Hypervisor%E5%90%8E%E7%AB%AF%E7%9A%84%E8%99%9A%E6%8B%9F%E6%9C%BA"><span class="nav-number">3.1.</span> <span class="nav-text">安装Apple Hypervisor后端的虚拟机</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AERosetta%E4%B8%8EAPT%E6%BA%90"><span class="nav-number">4.</span> <span class="nav-text">配置Rosetta与APT源</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ADB%E5%92%8B%E8%B7%91%E4%B8%8D%E8%B5%B7%E6%9D%A5%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">ADB咋跑不起来？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Geekbench%E5%90%AF%E5%8A%A8"><span class="nav-number">4.2.</span> <span class="nav-text">Geekbench启动</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">5.</span> <span class="nav-text">后记</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Apple-Hypervisor%E6%A1%86%E6%9E%B6%E4%B8%8D%E6%94%AF%E6%8C%81USB%E7%9B%B4%E9%80%9A%EF%BC%9F"><span class="nav-number">5.1.</span> <span class="nav-text">Apple Hypervisor框架不支持USB直通？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Parallels-Desktop%E4%B8%8B%E7%9A%84Rosetta%E4%BD%BF%E7%94%A8%E6%83%85%E5%86%B5"><span class="nav-number">5.2.</span> <span class="nav-text">Parallels Desktop下的Rosetta使用情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rosetta-on-Linux%EF%BC%8C%E8%BF%98%E6%9C%89%E4%BB%80%E4%B9%88%E7%8E%A9%E6%B3%95%EF%BC%9F"><span class="nav-number">5.3.</span> <span class="nav-text">Rosetta on Linux，还有什么玩法？</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

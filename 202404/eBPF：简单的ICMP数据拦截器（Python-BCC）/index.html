@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="我觉得兴趣是最好的老师，所以我想用一个直观的案例，让大家感受到eBPF的奥妙。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="eBPF：简单的ICMP数据拦截器（Python + BCC）">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="我觉得兴趣是最好的老师，所以我想用一个直观的案例，让大家感受到eBPF的奥妙。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i2.wp.com/img-blog.csdnimg.cn/20200407161415372.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2dlbmd6aGlrdWkxOTky,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img0.baidu.com/it/u=2645225864,2148800693&fm=253&fmt=auto&app=138&f=JPEG?w=878&h=500">
+<meta property="article:published_time" content="2024-04-16T13:40:21.000Z">
+<meta property="article:modified_time" content="2024-04-16T13:44:46.735Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="eBPF">
+<meta property="article:tag" content="BCC">
+<meta property="article:tag" content="内核">
+<meta property="article:tag" content="XDP">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i2.wp.com/img-blog.csdnimg.cn/20200407161415372.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2dlbmd6aGlrdWkxOTky,size_16,color_FFFFFF,t_70">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>eBPF：简单的ICMP数据拦截器（Python + BCC） | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          eBPF：简单的ICMP数据拦截器（Python + BCC）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-16 21:40:21 / 修改时间：21:44:46" itemprop="dateCreated datePublished" datetime="2024-04-16T21:40:21+08:00">2024-04-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">高性能网络</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/XDP/" itemprop="url" rel="index"><span itemprop="name">XDP</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我觉得兴趣是最好的老师，所以我想用一个直观的案例，让大家感受到eBPF的奥妙。</p>
+<span id="more"></span>
+
+<p>有些路由器上有<code>禁止ICMP</code> 的功能，打开后ping这个路由器就无响应了，今天这篇文章通过eBPF技术，来实现针对ICMP包丢包的功能。</p>
+<p>再看本文前，建议先根据前面的教程搭建好开发环境，本文中使用的的是Python3 + BCC工具链。</p>
+<h1 id="eBPF-XDP拦截ICMP与iptables拦截ICMP"><a href="#eBPF-XDP拦截ICMP与iptables拦截ICMP" class="headerlink" title="eBPF XDP拦截ICMP与iptables拦截ICMP"></a>eBPF XDP拦截ICMP与iptables拦截ICMP</h1><h2 id="iptables方式数据包传输路径"><a href="#iptables方式数据包传输路径" class="headerlink" title="iptables方式数据包传输路径"></a>iptables方式数据包传输路径</h2><p>iptables有两种方式配置拦截ICMP请求包，一种是reject，一种是drop</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -A INPUT -p icmp --icmp-type echo-request -j REJECT</span><br></pre></td></tr></table></figure>
+<p>采用这种方式时，对端会提示 <code>Destination port unreachable.</code></p>
+<p>如果采用drop方式，命令则为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -A INPUT -p icmp --icmp-type echo-request -j DROP</span><br></pre></td></tr></table></figure>
+<p>对端则会提示<code>Request timed out.</code></p>
+<p><strong>ICMP请求-&gt;网卡-&gt;内核TCP&#x2F;IP协议栈</strong></p>
+<p>进入内核TCP&#x2F;IP协议栈后，如果配置过iptables，则在ip_rcv()函数之后会有netfilter的hook处理，规则也是在这些hook部分生效的。</p>
+<h2 id="XDP方式丢包"><a href="#XDP方式丢包" class="headerlink" title="XDP方式丢包"></a>XDP方式丢包</h2><p>eBPF XDP支持Ingress链路，也就是接收网络数据的时候可以生效，并且在内核协议栈之前生效，简要数据流程如下<br><strong>ICMP请求-&gt;网卡-&gt;XDP_DROP</strong></p>
+<p>相比iptables配置netfilter方式来说，XDP的生效更早，可以更快地进行丢包的动作，减少CPU的占用。</p>
+<p><img src="https://i2.wp.com/img-blog.csdnimg.cn/20200407161415372.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2dlbmd6aGlrdWkxOTky,size_16,color_FFFFFF,t_70" alt="XDP架构"></p>
+<h1 id="看看代码"><a href="#看看代码" class="headerlink" title="看看代码"></a>看看代码</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> bcc <span class="keyword">import</span> BPF</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line">device=<span class="string">&quot;enp0s6&quot;</span></span><br><span class="line"></span><br><span class="line">c_code = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">#include &lt;uapi/linux/bpf.h&gt;</span></span><br><span class="line"><span class="string">#include &lt;linux/ip.h&gt;</span></span><br><span class="line"><span class="string">#include &lt;linux/icmp.h&gt;</span></span><br><span class="line"><span class="string">#include &lt;linux/in.h&gt;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">int xdp_drop_icmp(struct xdp_md* ctx)&#123;</span></span><br><span class="line"><span class="string">    void* data_end = (void*)(long)ctx-&gt;data_end;</span></span><br><span class="line"><span class="string">    void *data = (void *)(uintptr_t)ctx-&gt;data;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    struct iphdr *iph = data + sizeof(struct ethhdr);</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    if(IPPROTO_ICMP == iph-&gt;protocol)&#123;</span></span><br><span class="line"><span class="string">        return XDP_DROP;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    return XDP_PASS;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">xdp_mode = BPF.XDP_FLAGS_SKB_MODE</span><br><span class="line">b = BPF(text=c_code)</span><br><span class="line">func = b.load_func(<span class="string">&quot;xdp_drop_icmp&quot;</span>, BPF.XDP)</span><br><span class="line">b.attach_xdp(device, func, xdp_mode)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">running = <span class="literal">True</span></span><br><span class="line"><span class="keyword">while</span> running:</span><br><span class="line">    user_input = <span class="built_in">input</span>(<span class="string">&quot;输入后退出&quot;</span>)</span><br><span class="line">    <span class="keyword">if</span> user_input:</span><br><span class="line">        running = <span class="literal">False</span></span><br><span class="line">        </span><br><span class="line">b.remove_xdp(device, xdp_mode)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Exit&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>以上是一个简单的XDP DROP的示例，我们可以专注于发挥丢包作用的部分代码，C代码非常简短</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;uapi/linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/ip.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/icmp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/in.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">xdp_drop_icmp</span><span class="params">(<span class="keyword">struct</span> xdp_md* ctx)</span>&#123;</span><br><span class="line">    <span class="type">void</span>* data_end = (<span class="type">void</span>*)(<span class="type">long</span>)ctx-&gt;data_end;</span><br><span class="line">    <span class="type">void</span> *data = (<span class="type">void</span> *)(<span class="type">uintptr_t</span>)ctx-&gt;data;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iphdr</span> *<span class="title">iph</span> =</span> data + <span class="keyword">sizeof</span>(<span class="keyword">struct</span> ethhdr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(IPPROTO_ICMP == iph-&gt;protocol)&#123;</span><br><span class="line">        <span class="keyword">return</span> XDP_DROP;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> XDP_PASS;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，从xdp_md的上下文获取到以太网数据包的头指针，然后，在<code>data</code>头指针的基础上，加上<code>struct ethhdr</code>的长度，就可以得到IP层数据包开头的头指针。</p>
+<p><img src="https://img0.baidu.com/it/u=2645225864,2148800693&fm=253&fmt=auto&app=138&f=JPEG?w=878&h=500" alt="TCPIP网络数据包格式"></p>
+<p>在网络层的iphdr结构体中，有一个<code>protocol</code>的变量，表明了上层协议的类型，当我们通过以上的protocol字段判断出上层协议如果是ICMP的话，我们就通过XDP_DROP返回值将这个数据包丢弃。</p>
+<h1 id="运行失败？"><a href="#运行失败？" class="headerlink" title="运行失败？"></a>运行失败？</h1><p>加载eBPF程序需要root权限，所以我们运行的时候要用root用户或者使用sudo来执行。</p>
+<p>但是，你可能会发现，程序为什么跑不起来？</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">magicdian@magicdians-arm-ubuntu-server:~/eBPF/icmp_xdp_drop_python_demo$ sudo python3 drop.py </span><br><span class="line">[sudo] password <span class="keyword">for</span> magicdian: </span><br><span class="line">bpf: Failed to load program: Permission denied</span><br><span class="line">; void *data = (void *)(uintptr_t)ctx-&gt;data;</span><br><span class="line">0: (61) r1 = *(u32 *)(r1 +0)</span><br><span class="line">; <span class="keyword">if</span>(IPPROTO_ICMP == iph-&gt;protocol)&#123;</span><br><span class="line">1: (71) r1 = *(u8 *)(r1 +23)</span><br><span class="line">invalid access to packet, off=23 size=1, R1(<span class="built_in">id</span>=0,off=23,r=0)</span><br><span class="line">R1 offset is outside of the packet</span><br><span class="line">processed 2 insns (<span class="built_in">limit</span> 1000000) max_states_per_insn 0 total_states 0 peak_states 0 mark_read 0</span><br><span class="line"></span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">&quot;/home/magicdian/eBPF/icmp_xdp_drop_python_demo/drop.py&quot;</span>, line 31, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">    func = b.load_func(<span class="string">&quot;xdp_drop_icmp&quot;</span>, BPF.XDP)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python3/dist-packages/bcc-0.29.1+487331fe-py3.10.egg/bcc/__init__.py&quot;</span>, line 526, <span class="keyword">in</span> load_func</span><br><span class="line">Exception: Failed to load BPF program b<span class="string">&#x27;xdp_drop_icmp&#x27;</span>: Permission denied</span><br></pre></td></tr></table></figure>
+
+<p>报错提示加载失败，报错的原因是非法访问，为什么呢？</p>
+<p>因为eBPF程序运行在内核里，所以要确保程序运行的稳定性，因此eBPF程序加载的时候，会有一个叫做<code>verifier</code>的验证器存在。</p>
+<p>这个验证器会判断你的程序中是否有非法的指针、内存操作，如果有非法操作的话，就会拒绝程序的加载。</p>
+<p>在我们的案例中，我们收到的包的数据，如果data到data_end部分的长度没办法覆盖到完整的iphdr头部的话，我们尝试访问protocol字段就属于非法的内存访问，所以我们要先做一些保护性的判断。</p>
+<h1 id="添加保护判断"><a href="#添加保护判断" class="headerlink" title="添加保护判断"></a>添加保护判断</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;uapi/linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/ip.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/icmp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/in.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">xdp_drop_icmp</span><span class="params">(<span class="keyword">struct</span> xdp_md* ctx)</span>&#123;</span><br><span class="line">    <span class="type">void</span>* data_end = (<span class="type">void</span>*)(<span class="type">long</span>)ctx-&gt;data_end;</span><br><span class="line">    <span class="type">void</span> *data = (<span class="type">void</span> *)(<span class="type">uintptr_t</span>)ctx-&gt;data;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(data + <span class="keyword">sizeof</span>(<span class="keyword">struct</span> ethhdr)+<span class="keyword">sizeof</span>(<span class="keyword">struct</span> iphdr) &gt; data_end)&#123;</span><br><span class="line">        <span class="keyword">return</span> XDP_PASS;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iphdr</span> *<span class="title">iph</span> =</span> data + <span class="keyword">sizeof</span>(<span class="keyword">struct</span> ethhdr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(IPPROTO_ICMP == iph-&gt;protocol)&#123;</span><br><span class="line">        <span class="keyword">return</span> XDP_DROP;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> XDP_PASS;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>修改后，如果data头指针加上以太网头和网络层头部后大于data_end指向的位置，就表明这个数据包无法正常访问到iphdr的protocol字段，这种情况将这个数据包透传交付给TCP&#x2F;IP内核协议栈做进一步的处理。</p>
+<p>按上面的方式修改后，我们尝试ping测试机的IP地址（python脚本中指定的网卡接口的地址），会发现提示<code>Request timeout for icmp_seq</code>，而当我们退出python脚本后，又可以正常ping，就表明我们的实验成功了。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/eBPF/" rel="tag"># eBPF</a>
+              <a href="/tags/BCC/" rel="tag"># BCC</a>
+              <a href="/tags/%E5%86%85%E6%A0%B8/" rel="tag"># 内核</a>
+              <a href="/tags/XDP/" rel="tag"># XDP</a>
+              <a href="/tags/Python/" rel="tag"># Python</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/eBPF%EF%BC%9AUbuntu%E5%B9%B3%E5%8F%B0%E4%BD%BF%E7%94%A8%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91BCC/" rel="prev" title="eBPF：Ubuntu平台使用源码编译BCC">
+      <i class="fa fa-chevron-left"></i> eBPF：Ubuntu平台使用源码编译BCC
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/" rel="next" title="使用clang + libbpf 编写eBPF XDP程序">
+      使用clang + libbpf 编写eBPF XDP程序 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#eBPF-XDP%E6%8B%A6%E6%88%AAICMP%E4%B8%8Eiptables%E6%8B%A6%E6%88%AAICMP"><span class="nav-number">1.</span> <span class="nav-text">eBPF XDP拦截ICMP与iptables拦截ICMP</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#iptables%E6%96%B9%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%8C%85%E4%BC%A0%E8%BE%93%E8%B7%AF%E5%BE%84"><span class="nav-number">1.1.</span> <span class="nav-text">iptables方式数据包传输路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#XDP%E6%96%B9%E5%BC%8F%E4%B8%A2%E5%8C%85"><span class="nav-number">1.2.</span> <span class="nav-text">XDP方式丢包</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%9C%8B%E7%9C%8B%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">看看代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E5%A4%B1%E8%B4%A5%EF%BC%9F"><span class="nav-number">3.</span> <span class="nav-text">运行失败？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E4%BF%9D%E6%8A%A4%E5%88%A4%E6%96%AD"><span class="nav-number">4.</span> <span class="nav-text">添加保护判断</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

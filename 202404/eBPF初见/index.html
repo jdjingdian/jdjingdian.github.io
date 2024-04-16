@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="更高，更快，更强  0x0 前情提要毕业工作后，eBPF技术是我在工作中学习并成功使用的一项技术，成功使用这个技术让我非常有成就感。我认为这项技术大有可为，在此与大家分享。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="eBPF初见">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/eBPF%E5%88%9D%E8%A7%81/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="更高，更快，更强  0x0 前情提要毕业工作后，eBPF技术是我在工作中学习并成功使用的一项技术，成功使用这个技术让我非常有成就感。我认为这项技术大有可为，在此与大家分享。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://imgopt.infoq.com/fit-in/1200x2400/filters:quality(80)/filters:no_upscale()/articles/gentle-linux-ebpf-introduction/en/resources/47image005-1619704397592.jpg">
+<meta property="article:published_time" content="2024-04-16T13:34:58.000Z">
+<meta property="article:modified_time" content="2024-04-16T13:38:47.468Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="eBPF">
+<meta property="article:tag" content="内核">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://imgopt.infoq.com/fit-in/1200x2400/filters:quality(80)/filters:no_upscale()/articles/gentle-linux-ebpf-introduction/en/resources/47image005-1619704397592.jpg">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/eBPF%E5%88%9D%E8%A7%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>eBPF初见 | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/eBPF%E5%88%9D%E8%A7%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          eBPF初见
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-16 21:34:58 / 修改时间：21:38:47" itemprop="dateCreated datePublished" datetime="2024-04-16T21:34:58+08:00">2024-04-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>更高，更快，更强</p>
+</blockquote>
+<h1 id="0x0-前情提要"><a href="#0x0-前情提要" class="headerlink" title="0x0 前情提要"></a>0x0 前情提要</h1><p>毕业工作后，eBPF技术是我在工作中学习并成功使用的一项技术，成功使用这个技术让我非常有成就感。我认为这项技术大有可为，在此与大家分享。</p>
+<span id="more"></span>
+<p>eBPF并不是一个很简单的东西，学习起来会遇到坑，会吃力，但是我觉得，当一个人离开他的舒适区的时候，就意味着他的舒适区变大了。</p>
+<p>本文作为eBPF系列文章的开头，主要简单给大家介绍eBPF技术，相关内容也是取自网上。</p>
+<h1 id="0x1-什么是eBPF"><a href="#0x1-什么是eBPF" class="headerlink" title="0x1 什么是eBPF"></a>0x1 什么是eBPF</h1><p>eBPF全称是extended Berkeley Packet Filter，它的前身是cBPF（classic BPF），诞生于伯克利大学。在1992年时，Steven McCanne和Van Jacobson在一篇论文中提出了BPF技术，这种技术可以在Unix内核中实现网络数据包过滤，并且其性能比当时最快的数据包过滤技术还快20倍，我们工作中常用的tcpdump工具中的libpcap就是基于BPF技术的。</p>
+<p>cBPF可以在内核协议栈中进行高效的数据包处理操作。由于运行在内核中，避免了用户空间和内核空间的频繁切换，从而提升了性能。</p>
+<p>但是由于BPF指令集的限制和功能的局限性，它无法满足更加复杂和灵活的数据包处理的需要。</p>
+<p>eBPF的概念应该是在Linux 3.15 ~ 3.18版本引入的，由于网上有说3.15也有说3.18，我也不知道哪个是正确的。</p>
+<p>eBPF的到来是BPF技术的一个转折点，以往BPF只能针对网络数据包进行处理，而eBPF变成了内核里的一个非常强大的子系统，可以实现包括网络监控、安全过滤、性能分析等功能。</p>
+<p>并且，eBPF的出现让内核功能扩展变得更加的方便。</p>
+<p>以往如果需要给内核添加功能，往往需要完全重新编译内核代码。而eBPF技术，允许用户将需要添加的功能编译为bytecode，由eBPF的加载器通过JIT翻译成机器语言加载到内核中，<em><strong>在不用重新编译内核代码的情况下，将功能添加到内核中。</strong></em></p>
+<h1 id="0x2-eBPF有什么实际应用"><a href="#0x2-eBPF有什么实际应用" class="headerlink" title="0x2 eBPF有什么实际应用"></a>0x2 eBPF有什么实际应用</h1><ul>
+<li>网络性能优化：eBPF可以实现自定义的TCP拥塞控制，网络流量压缩等功能，基于eBPF的XDP技术提供了超高性能的网络通道</li>
+<li>网络监控：在内核态收集并分析网络数据包，可以帮助分析网络流量</li>
+<li>安全审计：eBPF可以监控Linux内核函数的调用，检测并记录恶意软件或攻击行为</li>
+<li>…</li>
+</ul>
+<h1 id="0x3-学习和使用eBPF技术需要什么"><a href="#0x3-学习和使用eBPF技术需要什么" class="headerlink" title="0x3 学习和使用eBPF技术需要什么"></a>0x3 学习和使用eBPF技术需要什么</h1><p>对于个人来说：</p>
+<ol>
+<li>对于计算机操作系统知识要有一定的了解</li>
+<li>需要了解eBPF技术的基本概念和原理，了解eBPF运行的流程</li>
+<li>必须会使用C语言，可选go、python</li>
+<li>不要怕失败，主动在网上搜寻答案的心</li>
+</ol>
+<p>对于使用eBPF，需要满足包括但不限于以下的硬件环境</p>
+<ol>
+<li>支持eBPF技术的Linux内核版本（一般来说现在发行版的Linux内核都是默认开启该功能的支持的）<ul>
+<li>Ubuntu 20.10+</li>
+<li>Fedora 31+</li>
+<li>RHEL 8.2+</li>
+<li>Debian 11+</li>
+</ul>
+</li>
+<li>root权限，一般情况下，加载eBPF程序进入内核需要root权限</li>
+<li>开发过程中，你可能会需要使用到内核头文件</li>
+</ol>
+<h1 id="0x4-eBPF技术架构"><a href="#0x4-eBPF技术架构" class="headerlink" title="0x4 eBPF技术架构"></a>0x4 eBPF技术架构</h1><p><img src="https://imgopt.infoq.com/fit-in/1200x2400/filters:quality(80)/filters:no_upscale()/articles/gentle-linux-ebpf-introduction/en/resources/47image005-1619704397592.jpg" alt="eBPF技术架构"></p>
+<p>这张图总体是比较直观的，对于开发人员来说，首先我们需要用C语言编写一份eBPF的程序，程序代码经过<strong>Clang&#x2F;LLVM</strong> 编译器后生成 <strong>eBPF bytecode字节码</strong>，然后我们需要用root权限，将eBPF bytecode加载进内核，一般来说，会有一个 <strong>verifier验证器</strong> 存在，这个验证器主要是为了验证我们编写的程序是否有非法的内存访问，防止我们的程序把内核搞崩了。</p>
+<p>如果验证器觉得我们编写的应用没有毛病，就会通过JIT编译器将eBPF字节码转换为我们机器可以执行的代码。</p>
+<p>图中的MAPS是用于存放数据的，这是一个内核态和用户态都可以访问的内存空间，最终用户态的程序可以从MAPS里获取到内核中eBPF程序运行的数据，并进行结果输出。</p>
+<h1 id="0x5-eBPF-CO-RE特性"><a href="#0x5-eBPF-CO-RE特性" class="headerlink" title="0x5 eBPF CO-RE特性"></a>0x5 eBPF CO-RE特性</h1><p>eBPF技术紧密与内核相关，但是eBPF技术的开发者们不希望eBPF像cBPF一样受限于内核版本，因为Linux的API不稳定，不同版本之间可能会有很大的差别。希望eBPF开发编译一次后，能在不同的内核版本上直接运行。</p>
+<p>所以eBPF提出了CO-RE的概念（Compile Once - Run Everywhere），要使用CO-RE特性需要Linux内核支持<strong>BTF</strong> 特性，从而eBPF程序在运行并访问内核中的结构体时，可以根据BTF提供的信息自动实现内存地址的偏移映射，从而实现一个eBPF程序可以在多个不同内核版本的机器上正常运行。</p>
+<p>这个特性我暂时没有成功实践，目前大概知道需要以下的一些前提条件</p>
+<ul>
+<li>Linux内核编译时配置支持暴露BTF格式的数据结构</li>
+<li>Clang编译器编译eBPF程序时，将对内核数据结构的访问记录以及重定位信息保存在ELF文件的section中</li>
+<li>BPF Loader程序，可以在加载的时候通过读取内核BTF，和eBPF的重定位信息来修正访问的信息，完成最终的重定位。</li>
+<li>libbpf支持对eBPF暴露Kconfig或者配置<code>struct flavor</code>机制来兼容不同的内核数据结构改名或含义不同的情况</li>
+</ul>
+<h1 id="0x6-eBPF开发框架推荐"><a href="#0x6-eBPF开发框架推荐" class="headerlink" title="0x6 eBPF开发框架推荐"></a>0x6 eBPF开发框架推荐</h1><p>eBPF技术的学习曲线确实比较陡峭，个人推荐两个库，可以让学习eBPF更轻松</p>
+<h2 id="1-BCC-BPF-Compiler-Collection"><a href="#1-BCC-BPF-Compiler-Collection" class="headerlink" title="1. BCC (BPF Compiler Collection)"></a>1. BCC (BPF Compiler Collection)</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/iovisor/bcc">https://github.com/iovisor/bcc</a><br>这套工具集合了eBPF开发需要的很多工具包，并且支持通过Python开发。下面放一段简单的代码，每当系统内核调用<code>execve</code>函数时，就会在控制台打印Hello World</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> bcc <span class="keyword">import</span> BPF</span><br><span class="line"></span><br><span class="line">program = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">int hello(void *ctx) &#123;</span></span><br><span class="line"><span class="string">    bpf_trace_printk(&quot;Hello World!&quot;);</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个待绑定的函数 hello，后面我们会将它绑定到一个内核函数的执行上</span></span><br><span class="line">b = BPF(text=program)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 调用helper function获取函数名对应的系统调用</span></span><br><span class="line">syscall = b.get_syscall_fnname(<span class="string">&quot;execve&quot;</span>)</span><br><span class="line"><span class="comment"># 进行kprobe绑定</span></span><br><span class="line">b.attach_kprobe(event=syscall, fn_name=<span class="string">&quot;hello&quot;</span>)</span><br><span class="line"><span class="comment"># 打印eBPF程序的执行情况</span></span><br><span class="line">b.trace_print()</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>代码摘自<a target="_blank" rel="noopener" href="https://www.torch-fan.site/2023/04/11/eBPF%E4%BD%BF%E7%94%A8/">https://www.torch-fan.site/2023/04/11/eBPF使用/</a></p>
+</blockquote>
+<p>这段代码中，首先通过bcc工具引入BPF</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">program = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">int hello(void *ctx) &#123;</span></span><br><span class="line"><span class="string">    bpf_trace_printk(&quot;Hello World!&quot;);</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>然后program定义为了一串字符串，里面的内容就是c语言的eBPF代码，然后通过BCC库中BPF方法，将C代码即时编译并加载进内核，attach_kprobe方法指定了自定义eBPF程序在内核中挂载的位置，对于execve系统调用事件来说，每当这个系统函数被执行的时候，我们自定义挂载上去的eBPF程序也会被顺带一起执行。</p>
+<h2 id="ebpf-go库"><a href="#ebpf-go库" class="headerlink" title="ebpf-go库"></a>ebpf-go库</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/cilium/ebpf">https://github.com/cilium/ebpf</a><br>这个库是纯go语言的，对于本身熟悉go语言的人来说会更友好。</p>
+<hr>
+<p>不知道今天的内容能不能让大家对eBPF技术有一个简单的了解，后续我会基于一些实际的应用场景和我踩过的坑推出具体的分享。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/eBPF/" rel="tag"># eBPF</a>
+              <a href="/tags/%E5%86%85%E6%A0%B8/" rel="tag"># 内核</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/" rel="prev" title="NFS配合BTRFS的媒体下载播放组合拳">
+      <i class="fa fa-chevron-left"></i> NFS配合BTRFS的媒体下载播放组合拳
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202404/eBPF%EF%BC%9AXDP%EF%BC%8C%E5%86%85%E6%A0%B8%E9%AB%98%E9%80%9F%E8%B7%AF/" rel="next" title="eBPF：XDP，内核高速路">
+      eBPF：XDP，内核高速路 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x0-%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">0x0 前情提要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x1-%E4%BB%80%E4%B9%88%E6%98%AFeBPF"><span class="nav-number">2.</span> <span class="nav-text">0x1 什么是eBPF</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x2-eBPF%E6%9C%89%E4%BB%80%E4%B9%88%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">0x2 eBPF有什么实际应用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x3-%E5%AD%A6%E4%B9%A0%E5%92%8C%E4%BD%BF%E7%94%A8eBPF%E6%8A%80%E6%9C%AF%E9%9C%80%E8%A6%81%E4%BB%80%E4%B9%88"><span class="nav-number">4.</span> <span class="nav-text">0x3 学习和使用eBPF技术需要什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x4-eBPF%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84"><span class="nav-number">5.</span> <span class="nav-text">0x4 eBPF技术架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x5-eBPF-CO-RE%E7%89%B9%E6%80%A7"><span class="nav-number">6.</span> <span class="nav-text">0x5 eBPF CO-RE特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x6-eBPF%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6%E6%8E%A8%E8%8D%90"><span class="nav-number">7.</span> <span class="nav-text">0x6 eBPF开发框架推荐</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-BCC-BPF-Compiler-Collection"><span class="nav-number">7.1.</span> <span class="nav-text">1. BCC (BPF Compiler Collection)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ebpf-go%E5%BA%93"><span class="nav-number">7.2.</span> <span class="nav-text">ebpf-go库</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

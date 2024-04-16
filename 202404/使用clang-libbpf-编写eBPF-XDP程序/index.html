@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前情提要之前介绍了使用python + BCC套件的方式来编写eBPF程序，应该比较容易理解。 但在实际的生产场景中，如果要与现有的程序相结合，python可能并不是一个特别好的选择，比如我想在Android平台开发eBPF功能，系统没有python，那咋开发咧？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用clang + libbpf 编写eBPF XDP程序">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="前情提要之前介绍了使用python + BCC套件的方式来编写eBPF程序，应该比较容易理解。 但在实际的生产场景中，如果要与现有的程序相结合，python可能并不是一个特别好的选择，比如我想在Android平台开发eBPF功能，系统没有python，那咋开发咧？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/1.png">
+<meta property="og:image" content="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/2.png">
+<meta property="article:published_time" content="2024-04-16T13:44:21.000Z">
+<meta property="article:modified_time" content="2024-04-16T13:50:02.460Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="eBPF">
+<meta property="article:tag" content="内核">
+<meta property="article:tag" content="XDP">
+<meta property="article:tag" content="libbpf">
+<meta property="article:tag" content="Clang">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/1.png">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>使用clang + libbpf 编写eBPF XDP程序 | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用clang + libbpf 编写eBPF XDP程序
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-16 21:44:21 / 修改时间：21:50:02" itemprop="dateCreated datePublished" datetime="2024-04-16T21:44:21+08:00">2024-04-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">高性能网络</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/XDP/" itemprop="url" rel="index"><span itemprop="name">XDP</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>之前介绍了使用python + BCC套件的方式来编写eBPF程序，应该比较容易理解。</p>
+<p>但在实际的生产场景中，如果要与现有的程序相结合，python可能并不是一个特别好的选择，比如我想在Android平台开发eBPF功能，系统没有python，那咋开发咧？</p>
+<span id="more"></span>
+
+<p>而且使用python + BCC的方式，本质上还是要写C代码，而编写的过程中由于没有C的自动补全和跳转，可能开发反而不方便，所以还是回归本质，直接用C开发eBPF程序。</p>
+<h1 id="什么是libbpf？"><a href="#什么是libbpf？" class="headerlink" title="什么是libbpf？"></a>什么是libbpf？</h1><p><a target="_blank" rel="noopener" href="https://github.com/libbpf/libbpf">libbpf仓库</a>地址放在文末引用。</p>
+<p>那么什么是libbpf呢？我在谷歌上搜出一篇博客中介绍到了</p>
+<blockquote>
+<p>libbpf<strong>是一个C库，提供eBPF实用函数和定义，用户空间程序可以使用它来管理内核空间的eBPF程序</strong>。 这个应用程序栈选项是最新的，是上游Linux源代码仓库的一部分，与最新的eBPF功能保持一致，并用于测试新的内核eBPF功能。</p>
+</blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.cnxct.com/ebpf-application-development-beyond-basics-zh_cn/#:~:text=libbpf%E6%98%AF%E4%B8%80%E4%B8%AAC%E5%BA%93,%E6%96%B0%E7%9A%84%E5%86%85%E6%A0%B8eBPF%E5%8A%9F%E8%83%BD%E3%80%82">CFC4N博客对于libbpf的介绍原文</a>放在文末引用。</p>
+<p>使用libbpf前，需要在系统安装libbpf工具包，ubuntu下安装命令为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install libbpf-dev</span><br></pre></td></tr></table></figure>
+
+<h1 id="实现ICMP-REJECT"><a href="#实现ICMP-REJECT" class="headerlink" title="实现ICMP REJECT"></a>实现ICMP REJECT</h1><p>上一次我们通过<strong>XDP DROP</strong> 实现了对ICMP数据进行丢包，这一次的话，我们要稍微进阶一点，尝试修改ICMP数据包，并将数据返回给发送端。</p>
+<h2 id="Show-you-the-code"><a href="#Show-you-the-code" class="headerlink" title="Show you the code"></a>Show you the code</h2><p>先上代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// #include &lt;uapi/linux/bpf.h&gt;</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/ip.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/icmp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/in.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;linux/if_ether.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_endian.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ICMP_ECHO_LEN		64</span></span><br><span class="line"><span class="comment">//#define SEC(NAME) __attribute__((section(NAME), used))</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> memcpy</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> memcpy(dest, src, n)   __builtin_memcpy((dest), (src), (n))</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> __always_inline</span><br><span class="line"><span class="type">void</span> <span class="title function_">swap_src_dst_mac</span><span class="params">(<span class="type">void</span> *data)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">short</span> *p = data;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">short</span> dst[<span class="number">3</span>];</span><br><span class="line">	<span class="comment">//交换源地址和目的地址</span></span><br><span class="line">	dst[<span class="number">0</span>] = p[<span class="number">0</span>];</span><br><span class="line">	dst[<span class="number">1</span>] = p[<span class="number">1</span>];</span><br><span class="line">	dst[<span class="number">2</span>] = p[<span class="number">2</span>];</span><br><span class="line">	p[<span class="number">0</span>] = p[<span class="number">3</span>];</span><br><span class="line">	p[<span class="number">1</span>] = p[<span class="number">4</span>];</span><br><span class="line">	p[<span class="number">2</span>] = p[<span class="number">5</span>];</span><br><span class="line">	p[<span class="number">3</span>] = dst[<span class="number">0</span>];</span><br><span class="line">	p[<span class="number">4</span>] = dst[<span class="number">1</span>];</span><br><span class="line">	p[<span class="number">5</span>] = dst[<span class="number">2</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> __always_inline <span class="type">int</span> <span class="title function_">icmp_check</span><span class="params">(<span class="keyword">struct</span> xdp_md *ctx, <span class="type">int</span> type)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">void</span> *data = (<span class="type">void</span> *)(<span class="type">long</span>)ctx-&gt;data;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ethhdr</span> *<span class="title">eth</span> =</span> data;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">icmphdr</span> *<span class="title">icmph</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">iphdr</span> *<span class="title">iph</span>;</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph) + ICMP_ECHO_LEN &gt; data_end)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (eth-&gt;h_proto != bpf_htons(ETH_P_IP))</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	iph = data + <span class="keyword">sizeof</span>(*eth);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (iph-&gt;protocol != IPPROTO_ICMP)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (bpf_ntohs(iph-&gt;tot_len) - <span class="keyword">sizeof</span>(*iph) != ICMP_ECHO_LEN)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	icmph = data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (icmph-&gt;type != type)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> XDP_TX;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;prog&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">xdp_drop_icmp</span><span class="params">(<span class="keyword">struct</span> xdp_md* ctx)</span>&#123;</span><br><span class="line">    <span class="type">void</span>* data_end = (<span class="type">void</span>*)(<span class="type">long</span>)ctx-&gt;data_end;</span><br><span class="line">    <span class="type">void</span> *data = (<span class="type">void</span> *)(<span class="type">uintptr_t</span>)ctx-&gt;data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ethhdr</span> *<span class="title">eth</span> =</span> data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iphdr</span> *<span class="title">iph</span> =</span> (<span class="keyword">struct</span> iphdr *)(eth + <span class="number">1</span>);</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">icmphdr</span> *<span class="title">icmph</span> =</span> (<span class="keyword">struct</span> icmphdr *)(iph + <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//判断数据包格式是否符合需求</span></span><br><span class="line">    <span class="type">int</span> ret = icmp_check(ctx, ICMP_ECHO);<span class="comment">//ECHO_REQUEST</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(ret != XDP_TX)&#123;</span><br><span class="line">		<span class="keyword">return</span> ret;</span><br><span class="line">    &#125;	</span><br><span class="line">   </span><br><span class="line">	<span class="comment">//获取ip头和icmp头指针</span></span><br><span class="line">    iph = data + <span class="keyword">sizeof</span>(*eth);</span><br><span class="line">    icmph = data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph); </span><br><span class="line"></span><br><span class="line">	<span class="type">void</span>* icmp_data = data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph) + <span class="keyword">sizeof</span>(*icmph);</span><br><span class="line">	<span class="built_in">memcpy</span>(icmp_data, iph, <span class="keyword">sizeof</span>(*iph) + <span class="keyword">sizeof</span>(*icmph));</span><br><span class="line"></span><br><span class="line">	<span class="comment">//切换MAC和IP的源地址和目的地址</span></span><br><span class="line">    __be32 saddr = iph-&gt;saddr;</span><br><span class="line">    swap_src_dst_mac(data);</span><br><span class="line">	iph-&gt;saddr = iph-&gt;daddr;</span><br><span class="line">	iph-&gt;daddr = saddr;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//修改包类型和状态码</span></span><br><span class="line">	icmph-&gt;type = ICMP_DEST_UNREACH;</span><br><span class="line">	icmph-&gt;code = ICMP_PORT_UNREACH;</span><br><span class="line">	<span class="keyword">return</span> XDP_TX;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> __license[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>以上的代码，相比之前DROP功能，我们在判断出ICMP数据包后，会更进一步，计算出icmp层包头部分的地址，并修改其中的type和code字段，从而实现ICMP REJECT，具体的原因是”端口不可达“。</p>
+<p>以上代码我保存的文件名是 <em>icmp_reject.c</em></p>
+<h2 id="编译eBPF-XDP程序"><a href="#编译eBPF-XDP程序" class="headerlink" title="编译eBPF XDP程序"></a>编译eBPF XDP程序</h2><p>编译的命令是</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -Wall -O2 -target bpf -I/usr/include/aarch64-linux-gnu -c icmp_reject.c -o icmp_reject.o</span><br></pre></td></tr></table></figure>
+
+<p>我实在aarch64系统的虚拟机上编译，在你自己的系统上编译时注意要修改这一部分 <code>-I/usr/include/aarch64-linux-gnu</code></p>
+<p>编译后我们会看到生成了<code>icmp_reject.o</code>文件，这个文件就是eBPF bytecode字节码。</p>
+<h2 id="挂载XDP程序到网卡"><a href="#挂载XDP程序到网卡" class="headerlink" title="挂载XDP程序到网卡"></a>挂载XDP程序到网卡</h2><p>现在我们可以将这个程序挂载到网卡上运行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ip <span class="built_in">link</span> <span class="built_in">set</span> dev enp0s6 xdpgeneric obj icmp_reject.o</span><br></pre></td></tr></table></figure>
+<p>注意<strong>enp0s6</strong> 是要挂载的网卡的名称<br><strong>xdpgeneric</strong> 表示当前以generic模式加载XDP程序。</p>
+<blockquote>
+<p>如果你在物理机上运行并且网卡支持的话，你可以尝试使用native模式加载，性能会更好</p>
+</blockquote>
+<p>取消挂载的命令是这个</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ip <span class="built_in">link</span> <span class="built_in">set</span> dev enp0s6 xdpgeneric off</span><br></pre></td></tr></table></figure>
+
+<p>挂载后尝试ping我们指定网卡的IP地址，输出如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">magicdian@MacBook-Pro-14 ~ % ping 10.211.55.6</span><br><span class="line">PING 10.211.55.6 (10.211.55.6): 56 data bytes</span><br><span class="line">Request <span class="built_in">timeout</span> <span class="keyword">for</span> icmp_seq 0</span><br><span class="line">Request <span class="built_in">timeout</span> <span class="keyword">for</span> icmp_seq 1</span><br><span class="line">Request <span class="built_in">timeout</span> <span class="keyword">for</span> icmp_seq 2</span><br></pre></td></tr></table></figure>
+
+<h2 id="为什么终端显示timeout？"><a href="#为什么终端显示timeout？" class="headerlink" title="为什么终端显示timeout？"></a>为什么终端显示timeout？</h2><p>按道理来说，我的程序已经将数据包的<code>type</code>修改成<strong>ICMP_DEST_UNREACH</strong> , 而<code>code</code> 也修改成了<strong>ICMP_PORT_UNREACH</strong>，为什么还是显示timeout？</p>
+<p>让我们打开wireshark一探究竟。</p>
+<p>在wireshark中选定对应的网卡进行监听，在wireshark中过滤icmp数据，并再次执行ping。</p>
+<p>我们可以看到，wireshark中有显示返回的被修改后<strong>REJECT</strong>的数据包，但是我们的ECHO请求确表示”no response found!”</p>
+<img src="/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/1.png" class="">
+
+<p>我们点进回复的数据包，并选中查看<code>Internet Control Message Protocol</code>，我们会发现Checksum一栏是黄色，并提示 <em>incorrect, should be 0xd9b7</em></p>
+<img src="/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/2.png" class="">
+
+<p>意思就是，数据包的checksum校验和失败，因此这条数据实际上被drop掉了。</p>
+<p>那么为什么checksum校验和失败了呢？</p>
+<p>因为我修改了ICMP数据包的中的内容，修改了type和code类型，而checksum却没有更新。</p>
+<h2 id="添加checksum相关代码"><a href="#添加checksum相关代码" class="headerlink" title="添加checksum相关代码"></a>添加checksum相关代码</h2><p>libbpf中有帮助方法，可以便捷地计算checksum。计算之前我们要将checksum先改成0，然后再进行计算</p>
+<p>这样一来，完整的代码就变成了这样</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// #include &lt;uapi/linux/bpf.h&gt;</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/ip.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/icmp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/in.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;linux/if_ether.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_endian.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ICMP_ECHO_LEN		64</span></span><br><span class="line"><span class="comment">//#define SEC(NAME) __attribute__((section(NAME), used))</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> memcpy</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> memcpy(dest, src, n)   __builtin_memcpy((dest), (src), (n))</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> __always_inline __u16 <span class="title function_">csum_fold_helper</span><span class="params">(__wsum sum)</span></span><br><span class="line">&#123;</span><br><span class="line">	sum = (sum &amp; <span class="number">0xffff</span>) + (sum &gt;&gt; <span class="number">16</span>);</span><br><span class="line">	<span class="keyword">return</span> ~((sum &amp; <span class="number">0xffff</span>) + (sum &gt;&gt; <span class="number">16</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> __always_inline __u16 <span class="title function_">ipv4_csum</span><span class="params">(<span class="type">void</span> *data_start, <span class="type">int</span> data_size)</span></span><br><span class="line">&#123;</span><br><span class="line">	__wsum sum;</span><br><span class="line"></span><br><span class="line">	sum = bpf_csum_diff(<span class="number">0</span>, <span class="number">0</span>, data_start, data_size, <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">return</span> csum_fold_helper(sum);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> __always_inline</span><br><span class="line"><span class="type">void</span> <span class="title function_">swap_src_dst_mac</span><span class="params">(<span class="type">void</span> *data)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">short</span> *p = data;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">short</span> dst[<span class="number">3</span>];</span><br><span class="line">	<span class="comment">//交换源地址和目的地址</span></span><br><span class="line">	dst[<span class="number">0</span>] = p[<span class="number">0</span>];</span><br><span class="line">	dst[<span class="number">1</span>] = p[<span class="number">1</span>];</span><br><span class="line">	dst[<span class="number">2</span>] = p[<span class="number">2</span>];</span><br><span class="line">	p[<span class="number">0</span>] = p[<span class="number">3</span>];</span><br><span class="line">	p[<span class="number">1</span>] = p[<span class="number">4</span>];</span><br><span class="line">	p[<span class="number">2</span>] = p[<span class="number">5</span>];</span><br><span class="line">	p[<span class="number">3</span>] = dst[<span class="number">0</span>];</span><br><span class="line">	p[<span class="number">4</span>] = dst[<span class="number">1</span>];</span><br><span class="line">	p[<span class="number">5</span>] = dst[<span class="number">2</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> __always_inline <span class="type">int</span> <span class="title function_">icmp_check</span><span class="params">(<span class="keyword">struct</span> xdp_md *ctx, <span class="type">int</span> type)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">void</span> *data_end = (<span class="type">void</span> *)(<span class="type">long</span>)ctx-&gt;data_end;</span><br><span class="line">	<span class="type">void</span> *data = (<span class="type">void</span> *)(<span class="type">long</span>)ctx-&gt;data;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">ethhdr</span> *<span class="title">eth</span> =</span> data;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">icmphdr</span> *<span class="title">icmph</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">iphdr</span> *<span class="title">iph</span>;</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph) + ICMP_ECHO_LEN &gt; data_end)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (eth-&gt;h_proto != bpf_htons(ETH_P_IP))</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	iph = data + <span class="keyword">sizeof</span>(*eth);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (iph-&gt;protocol != IPPROTO_ICMP)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (bpf_ntohs(iph-&gt;tot_len) - <span class="keyword">sizeof</span>(*iph) != ICMP_ECHO_LEN)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	icmph = data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (icmph-&gt;type != type)</span><br><span class="line">		<span class="keyword">return</span> XDP_PASS;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> XDP_TX;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;prog&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">xdp_drop_icmp</span><span class="params">(<span class="keyword">struct</span> xdp_md* ctx)</span>&#123;</span><br><span class="line">    <span class="type">void</span>* data_end = (<span class="type">void</span>*)(<span class="type">long</span>)ctx-&gt;data_end;</span><br><span class="line">    <span class="type">void</span> *data = (<span class="type">void</span> *)(<span class="type">uintptr_t</span>)ctx-&gt;data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ethhdr</span> *<span class="title">eth</span> =</span> data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iphdr</span> *<span class="title">iph</span> =</span> (<span class="keyword">struct</span> iphdr *)(eth + <span class="number">1</span>);</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">icmphdr</span> *<span class="title">icmph</span> =</span> (<span class="keyword">struct</span> icmphdr *)(iph + <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">	<span class="comment">//判断数据包格式是否符合需求</span></span><br><span class="line">    <span class="type">int</span> ret = icmp_check(ctx, ICMP_ECHO);<span class="comment">//ECHO_REQUEST</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(ret != XDP_TX)&#123;</span><br><span class="line">		<span class="keyword">return</span> ret;</span><br><span class="line">    &#125;	</span><br><span class="line">   </span><br><span class="line">	<span class="comment">//获取ip头和icmp头指针</span></span><br><span class="line">    iph = data + <span class="keyword">sizeof</span>(*eth);</span><br><span class="line">    icmph = data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph); </span><br><span class="line"></span><br><span class="line">	<span class="type">void</span>* icmp_data = data + <span class="keyword">sizeof</span>(*eth) + <span class="keyword">sizeof</span>(*iph) + <span class="keyword">sizeof</span>(*icmph);</span><br><span class="line">	<span class="built_in">memcpy</span>(icmp_data, iph, <span class="keyword">sizeof</span>(*iph) + <span class="keyword">sizeof</span>(*icmph));</span><br><span class="line"></span><br><span class="line">	<span class="comment">//切换MAC和IP的源地址和目的地址</span></span><br><span class="line">    __be32 saddr = iph-&gt;saddr;</span><br><span class="line">    swap_src_dst_mac(data);</span><br><span class="line">	iph-&gt;saddr = iph-&gt;daddr;</span><br><span class="line">	iph-&gt;daddr = saddr;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//修改包类型和状态码</span></span><br><span class="line">	icmph-&gt;type = ICMP_DEST_UNREACH;</span><br><span class="line">	icmph-&gt;code = ICMP_PORT_UNREACH;</span><br><span class="line"></span><br><span class="line">	icmph-&gt;checksum = <span class="number">0</span>;</span><br><span class="line">	<span class="comment">//重新计算checksum，计算前必须将原有checksum置为0</span></span><br><span class="line">	icmph-&gt;checksum = ipv4_csum(icmph, ICMP_ECHO_LEN);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> XDP_TX;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> __license[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>重新编译并挂载后再尝试ping</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">magicdian@MacBook-Pro-14 ~ % ping 10.211.55.6</span><br><span class="line">PING 10.211.55.6 (10.211.55.6): 56 data bytes</span><br><span class="line">64 bytes from ubuntu-server-22.04.shared (10.211.55.6): Destination Port Unreachable</span><br><span class="line">Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst</span><br><span class="line"> 4  5  00 5400 2027   0 0000  40  01 d6d4 10.211.55.2  10.211.55.6 </span><br><span class="line"></span><br><span class="line">Request <span class="built_in">timeout</span> <span class="keyword">for</span> icmp_seq 0</span><br><span class="line">64 bytes from ubuntu-server-22.04.shared (10.211.55.6): Destination Port Unreachable</span><br><span class="line">Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst</span><br><span class="line"> 4  5  00 5400 5eef   0 0000  40  01 980c 10.211.55.2  10.211.55.6 </span><br><span class="line"></span><br><span class="line">Request <span class="built_in">timeout</span> <span class="keyword">for</span> icmp_seq 1</span><br><span class="line">64 bytes from ubuntu-server-22.04.shared (10.211.55.6): Destination Port Unreachable</span><br><span class="line">Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst</span><br><span class="line"> 4  5  00 5400 2c26   0 0000  40  01 cad5 10.211.55.2  10.211.55.6 </span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>可以看到已经提示Destination Port Unreachable了，效果与使用iptables命令一样</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -A INPUT -p icmp --icmp-type echo-request -j REJECT</span><br></pre></td></tr></table></figure>
+
+<p>但是由于我们的XDP程序在网络数据包收包的时候运行在内核协议栈之前，所以相比iptables使用的netfilter可以更早的执行REJECT，效率也就更高了。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/eBPF/" rel="tag"># eBPF</a>
+              <a href="/tags/%E5%86%85%E6%A0%B8/" rel="tag"># 内核</a>
+              <a href="/tags/XDP/" rel="tag"># XDP</a>
+              <a href="/tags/libbpf/" rel="tag"># libbpf</a>
+              <a href="/tags/Clang/" rel="tag"># Clang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/" rel="prev" title="eBPF：简单的ICMP数据拦截器（Python + BCC）">
+      <i class="fa fa-chevron-left"></i> eBPF：简单的ICMP数据拦截器（Python + BCC）
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFlibbpf%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">什么是libbpf？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0ICMP-REJECT"><span class="nav-number">3.</span> <span class="nav-text">实现ICMP REJECT</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Show-you-the-code"><span class="nav-number">3.1.</span> <span class="nav-text">Show you the code</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91eBPF-XDP%E7%A8%8B%E5%BA%8F"><span class="nav-number">3.2.</span> <span class="nav-text">编译eBPF XDP程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%82%E8%BD%BDXDP%E7%A8%8B%E5%BA%8F%E5%88%B0%E7%BD%91%E5%8D%A1"><span class="nav-number">3.3.</span> <span class="nav-text">挂载XDP程序到网卡</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BB%88%E7%AB%AF%E6%98%BE%E7%A4%BAtimeout%EF%BC%9F"><span class="nav-number">3.4.</span> <span class="nav-text">为什么终端显示timeout？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0checksum%E7%9B%B8%E5%85%B3%E4%BB%A3%E7%A0%81"><span class="nav-number">3.5.</span> <span class="nav-text">添加checksum相关代码</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

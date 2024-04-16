@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="理论上使用nfs-kernel-server的服务器都可以用这个方法进行配置，可以用如下命令安装 1sudo apt-get install nfs-kernel-server">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在OpenMediaVault上配置NFS over RDMA">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/index.html">
+<meta property="og:site_name" content="魔趣典藏阁">
+<meta property="og:description" content="理论上使用nfs-kernel-server的服务器都可以用这个方法进行配置，可以用如下命令安装 1sudo apt-get install nfs-kernel-server">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-04-16T13:29:43.000Z">
+<meta property="article:modified_time" content="2024-04-16T13:32:18.495Z">
+<meta property="article:author" content="MAGICDIAN">
+<meta property="article:tag" content="服务器">
+<meta property="article:tag" content="RDMA">
+<meta property="article:tag" content="NFS">
+<meta property="article:tag" content="OpenMediaVault">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.magicdian.cn/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>在OpenMediaVault上配置NFS over RDMA | 魔趣典藏阁</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">魔趣典藏阁</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">更高，更快，更强</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/aboutMe" rel="section"><i class="fa fa-address-card fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/jdjingdian" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="MAGICDIAN">
+      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="魔趣典藏阁">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          在OpenMediaVault上配置NFS over RDMA
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2024-04-16 21:29:43 / 修改时间：21:32:18" itemprop="dateCreated datePublished" datetime="2024-04-16T21:29:43+08:00">2024-04-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>理论上使用<strong>nfs-kernel-server</strong>的服务器都可以用这个方法进行配置，可以用如下命令安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install nfs-kernel-server</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<p>本文主要参考了<strong>Sparktour’s</strong>博客中<a target="_blank" rel="noopener" href="https://sparktour.me/2023/08/24/mount-nfs-via-rdma-on-mlnx-card/">使用Mellanox网卡基于RDMA挂载NFS</a></p>
+<h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>之前家里的服务器系统用的是VMWare ESXi，主要一开始比较图方便，而且界面也算是美观。</p>
+<p>但用着用着，总觉得有些地方不太喜欢，比如配置TPM、链路聚合等功能，还需要一个额外的vCenter系统来进行管理配置，感觉太“重”了。</p>
+<p>所以前几天就忙着备份服务，并将服务器的系统重装为了Proxmox VE，一个基于KVM的虚拟化平台。</p>
+<p>在原本的服务器上，我在OpenMediaVault系统上配置了VGPU和Docker，相当于存储和业务都放在一个虚拟机里，优点ALL IN ONE的意思。</p>
+<p>既然推倒重来了，我还是希望能将家里服务器上的各个业务理顺一点，大概的架构像这样，后面管理也比较清晰，不至于ALL IN BOOM。</p>
+<p>那么要想实现这个架构，我必须做到，让上层的业务，能够访问存储服务器的资源。</p>
+<h1 id="技术选型"><a href="#技术选型" class="headerlink" title="技术选型"></a>技术选型</h1><p>目前比较需要存储的业务有两个，一个是Emby媒体服务器，一个是qBittorrent，Emby的话其实主要就是读取媒体文件而已，而qBittorrent的话，跑PT下载上传，对文件IO会比较敏感一些，所以我的想法是，qBittorrent用ISCSI连接到存储服务器，最好能配置成ISER（iSCSI Extensions for RDMA），然后Emby用NFS或者SMB连接到媒体服务器。ISER的配置我还没研究明白，NFS的比较简单，并且也支持RDMA，所以就先从这个开始入手了。</p>
+<blockquote>
+<p>我的Emby电影都是从PT站上下载的，我也不想当一个吸血鬼，下载完种子后不保种。所以我电影电视剧下载完后，是将下载的文件拷贝到Emby使用的硬盘上，某种意义上来说，把qBittorrent直接挂在存储服务器上确实方便，但综合想了一下，还是想将各个业务层分清楚一点。</p>
+</blockquote>
+<h1 id="开始配置NFS服务端"><a href="#开始配置NFS服务端" class="headerlink" title="开始配置NFS服务端"></a>开始配置NFS服务端</h1><p>OpenMediaVault原生支持NFS功能，直接在web上就可以配置。</p>
+<h2 id="WEB-UI配置"><a href="#WEB-UI配置" class="headerlink" title="WEB UI配置"></a>WEB UI配置</h2><p>第一步，在web上，服务——NFS——共享里配置好需要分享的文件夹</p>
+<p>第二步，在服务——NFS——设置，启动NFS服务</p>
+<h2 id="修改systemctl配置文件"><a href="#修改systemctl配置文件" class="headerlink" title="修改systemctl配置文件"></a>修改systemctl配置文件</h2><p>执行完上面两步，只是完成了基本的NFS配置，此时还不支持RDMA</p>
+<p>如果需要支持RDMA，需要加载内核模块，并让NFS服务器使用RDMA，好在OpenMediaVault的NFS基于<strong>nfs-kernel-server</strong>，只需要修改nfs服务的启动文件即可</p>
+<p>我们在这个路径可以看到nfs-kernel-server的启动配置文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=NFS server and services</span><br><span class="line">DefaultDependencies=no</span><br><span class="line">Requires=network.target proc-fs-nfsd.mount</span><br><span class="line">Requires=nfs-mountd.service</span><br><span class="line">Wants=rpcbind.socket network-online.target</span><br><span class="line">Wants=rpc-statd.service nfs-idmapd.service</span><br><span class="line">Wants=rpc-statd-notify.service</span><br><span class="line">Wants=nfsdcld.service</span><br><span class="line"></span><br><span class="line">After=network-online.target local-fs.target</span><br><span class="line">After=proc-fs-nfsd.mount rpcbind.socket nfs-mountd.service</span><br><span class="line">After=nfs-idmapd.service rpc-statd.service</span><br><span class="line">After=nfsdcld.service</span><br><span class="line">Before=rpc-statd-notify.service</span><br><span class="line"></span><br><span class="line"># GSS services dependencies and ordering</span><br><span class="line">Wants=auth-rpcgss-module.service rpc-svcgssd.service</span><br><span class="line">After=rpc-gssd.service gssproxy.service rpc-svcgssd.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=oneshot</span><br><span class="line">RemainAfterExit=yes</span><br><span class="line">ExecStartPre=-/usr/sbin/exportfs -r</span><br><span class="line">ExecStart=/usr/sbin/rpc.nfsd</span><br><span class="line">ExecStop=/usr/sbin/rpc.nfsd 0</span><br><span class="line">ExecStopPost=/usr/sbin/exportfs -au</span><br><span class="line">ExecStopPost=/usr/sbin/exportfs -f</span><br><span class="line"></span><br><span class="line">ExecReload=-/usr/sbin/exportfs -r</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+<p>我们只需要定位到<code>ExecStart=/usr/sbin/rpc.nfsd</code>， 在其上下添加内容</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[Service]</span><br><span class="line">Type=oneshot</span><br><span class="line">RemainAfterExit=yes</span><br><span class="line">ExecStartPre=-/usr/sbin/exportfs -r</span><br><span class="line"></span><br><span class="line">ExecStartPre=/sbin/modprobe rpcrdma</span><br><span class="line"></span><br><span class="line">ExecStart=/usr/sbin/rpc.nfsd</span><br><span class="line"></span><br><span class="line">ExecStartPost=/bin/bash -c &quot;sleep 3 &amp;&amp; echo &#x27;rdma 20049&#x27; | tee /proc/fs/nfsd/portlist&quot;</span><br><span class="line"></span><br><span class="line">ExecStop=/usr/sbin/rpc.nfsd 0</span><br><span class="line">ExecStopPost=/usr/sbin/exportfs -au</span><br><span class="line">ExecStopPost=/usr/sbin/exportfs -f</span><br></pre></td></tr></table></figure>
+
+<p>这个配置的意思是，在启动NFS服务之前，先加载rpcrdma内核模块</p>
+<p>然后在启动后，添加使用RDMA支持，监听20049端口。</p>
+<p>修改完后重载启动配置</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl daemon-reload</span><br></pre></td></tr></table></figure>
+
+<p>然后重启NFS服务</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl restart nfs-kernel-server.service</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="配置NFS客户端"><a href="#配置NFS客户端" class="headerlink" title="配置NFS客户端"></a>配置NFS客户端</h2><p>首先客户端需要安装nfs-common组件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install nfs-common</span><br></pre></td></tr></table></figure>
+
+<p>然后用以下命令挂载即可</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mount -o proto=rdma,port=20049 NFS服务器的IP地址:/NFS共享文件夹名称 你本地的挂载点</span><br></pre></td></tr></table></figure>
+
+<p>例如，我在本地新建了一个test文件夹当做挂载点，NFS服务器地址是192.168.4.72，NFS分享的目录名称叫做pt_share_folder，</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mount -o proto=rdma,port=20049 192.168.4.72:/pt_share_folder <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+
+<p>挂载的时候我们通过<code>proto=rdma,port=20049</code>来强制NFS走RDMA。</p>
+<p>看看跑分（<strong>淘汰的笔记本硬盘组的RAID0，性能比较幽默，理解一下</strong>）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">magicdian@ubuntu-hpn-dev:~/test$ curl -sL yabs.sh | bash -s -- -ig</span><br><span class="line"><span class="comment"># ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #</span></span><br><span class="line"><span class="comment">#              Yet-Another-Bench-Script              #</span></span><br><span class="line"><span class="comment">#                     v2024-03-05                    #</span></span><br><span class="line"><span class="comment"># https://github.com/masonr/yet-another-bench-script #</span></span><br><span class="line"><span class="comment"># ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #</span></span><br><span class="line"></span><br><span class="line">Fri Mar 29 06:04:10 AM UTC 2024</span><br><span class="line"></span><br><span class="line">Basic System Information:</span><br><span class="line">---------------------------------</span><br><span class="line">Uptime     : 0 days, 15 hours, 49 minutes</span><br><span class="line">Processor  : QEMU Virtual CPU version 2.5+</span><br><span class="line">CPU cores  : 48 @ 2794.746 MHz</span><br><span class="line">AES-NI     : ✔ Enabled</span><br><span class="line">VM-x/AMD-V : ❌ Disabled</span><br><span class="line">RAM        : 31.3 GiB</span><br><span class="line">Swap       : 8.0 GiB</span><br><span class="line">Disk       : 100.8 GiB</span><br><span class="line">Distro     : Ubuntu 22.04.4 LTS</span><br><span class="line">Kernel     : 5.15.0-101-generic</span><br><span class="line">VM Type    : KVM</span><br><span class="line">IPv4/IPv6  : ✔ Online / ❌ Offline</span><br><span class="line"></span><br><span class="line">IPv4 Network Information:</span><br><span class="line">---------------------------------</span><br><span class="line">ISP        : Akari Networks</span><br><span class="line">ASN        : AS38136 Akari Networks</span><br><span class="line">Host       : Akari Networks Limited</span><br><span class="line">Location   : Hong Kong, Central and Western District (HCW)</span><br><span class="line">Country    : Hong Kong</span><br><span class="line"></span><br><span class="line">fio Disk Speed Tests (Mixed R/W 50/50) (Partition 192.168.4.72:/pt_share_folder):</span><br><span class="line">---------------------------------</span><br><span class="line">Block Size | 4k            (IOPS) | 64k           (IOPS)</span><br><span class="line">  ------   | ---            ----  | ----           ---- </span><br><span class="line">Read       | 249.00 KB/s     (62) | 4.85 MB/s       (75)</span><br><span class="line">Write      | 265.00 KB/s     (66) | 5.09 MB/s       (79)</span><br><span class="line">Total      | 514.00 KB/s    (128) | 9.95 MB/s      (154)</span><br><span class="line">           |                      |                     </span><br><span class="line">Block Size | 512k          (IOPS) | 1m            (IOPS)</span><br><span class="line">  ------   | ---            ----  | ----           ---- </span><br><span class="line">Read       | 33.03 MB/s      (64) | 51.02 MB/s      (49)</span><br><span class="line">Write      | 35.23 MB/s      (68) | 54.19 MB/s      (52)</span><br><span class="line">Total      | 68.26 MB/s     (132) | 105.22 MB/s    (101)</span><br><span class="line"></span><br><span class="line">YABS completed <span class="keyword">in</span> 2 min 33 sec</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="配置完后的效果"><a href="#配置完后的效果" class="headerlink" title="配置完后的效果"></a>配置完后的效果</h1><ul>
+<li>文件传输时，iftop看不到网络流量，应该是通过RDMA技术直接访问远程内存了</li>
+<li>文件存储服务器重启后，docker的挂载点不需要额外的操作就可以继续访问了。</li>
+</ul>
+<h1 id="两个疑问"><a href="#两个疑问" class="headerlink" title="两个疑问"></a>两个疑问</h1><p>客户端在NFS挂载点使用fio进行测速的时候，用iftop命令是没有查看到有大流量的，但是在服务端，我使用命令 <code>netstat -ntulp</code> 并没有看到RDMA 20049端口的监听，应该要如何证实当前的NFS是基于RDMA的呢？</p>
+<p>另外，如果qBittorrent下载&#x2F;上传的过程中文件服务器重启&#x2F;挂掉会怎样??</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag"># 服务器</a>
+              <a href="/tags/RDMA/" rel="tag"># RDMA</a>
+              <a href="/tags/NFS/" rel="tag"># NFS</a>
+              <a href="/tags/OpenMediaVault/" rel="tag"># OpenMediaVault</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/mac%E5%B9%B3%E5%8F%B0%E9%85%8D%E7%BD%AE%E8%B0%B7%E6%AD%8CGMS%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/" rel="prev" title="mac平台配置谷歌GMS测试工具">
+      <i class="fa fa-chevron-left"></i> mac平台配置谷歌GMS测试工具
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/" rel="next" title="NFS配合BTRFS的媒体下载播放组合拳">
+      NFS配合BTRFS的媒体下载播放组合拳 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">技术选型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E9%85%8D%E7%BD%AENFS%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="nav-number">3.</span> <span class="nav-text">开始配置NFS服务端</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#WEB-UI%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">WEB UI配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9systemctl%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">3.2.</span> <span class="nav-text">修改systemctl配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AENFS%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="nav-number">3.3.</span> <span class="nav-text">配置NFS客户端</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%AE%8C%E5%90%8E%E7%9A%84%E6%95%88%E6%9E%9C"><span class="nav-number">4.</span> <span class="nav-text">配置完后的效果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%A4%E4%B8%AA%E7%96%91%E9%97%AE"><span class="nav-number">5.</span> <span class="nav-text">两个疑问</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">MAGICDIAN</p>
+  <div class="site-description" itemprop="description">MAGICDIAN的博客，记录学习与思考</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MAGICDIAN</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='125, 125, 125' opacity='0.5' zIndex='-1' count='99' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'neutral',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
