@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="之前发的在aarch64 Linux上运行amd64架构的应用，本质上是因为我需要一个跑谷歌测试工具的环境，重新读了一下README和启动脚本后发现，这个工具并没有限制一定要运行在Linux系统上，从启动脚本来看，至少是可以支持Linux和macOS的，并且我在M1 Pro上也确实跑成功了，但在arm64的Ubuntu上却没有，之后如果有空的话再研究看看咋回事 123456789101112131">
+  <meta name="description" content="之前发的在aarch64 Linux上运行amd64架构的应用，本质上是因为我需要一个跑谷歌测试工具的环境，重新读了一下README和启动脚本后发现，这个工具并没有限制一定要运行在Linux系统上，从启动脚本来看，至少是可以支持Linux和macOS的，并且我在M1 Pro上也确实跑成功了，但在arm64的Ubuntu上却没有，之后如果有空的话再研究看看咋回事">
 <meta property="og:type" content="article">
 <meta property="og:title" content="mac平台配置谷歌GMS测试工具">
 <meta property="og:url" content="https://blog.magicdian.cn/202404/mac%E5%B9%B3%E5%8F%B0%E9%85%8D%E7%BD%AE%E8%B0%B7%E6%AD%8CGMS%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/index.html">
 <meta property="og:site_name" content="魔趣典藏阁">
-<meta property="og:description" content="之前发的在aarch64 Linux上运行amd64架构的应用，本质上是因为我需要一个跑谷歌测试工具的环境，重新读了一下README和启动脚本后发现，这个工具并没有限制一定要运行在Linux系统上，从启动脚本来看，至少是可以支持Linux和macOS的，并且我在M1 Pro上也确实跑成功了，但在arm64的Ubuntu上却没有，之后如果有空的话再研究看看咋回事 123456789101112131">
+<meta property="og:description" content="之前发的在aarch64 Linux上运行amd64架构的应用，本质上是因为我需要一个跑谷歌测试工具的环境，重新读了一下README和启动脚本后发现，这个工具并没有限制一定要运行在Linux系统上，从启动脚本来看，至少是可以支持Linux和macOS的，并且我在M1 Pro上也确实跑成功了，但在arm64的Ubuntu上却没有，之后如果有空的话再研究看看咋回事">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-04-16T13:28:23.000Z">
-<meta property="article:modified_time" content="2024-04-16T13:29:09.431Z">
+<meta property="article:modified_time" content="2024-04-16T13:54:53.017Z">
 <meta property="article:author" content="MAGICDIAN">
 <meta property="article:tag" content="Google">
 <meta property="article:tag" content="AOSP">
@@ -197,7 +197,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2024-04-16 21:28:23 / 修改时间：21:29:09" itemprop="dateCreated datePublished" datetime="2024-04-16T21:28:23+08:00">2024-04-16</time>
+              <time title="创建时间：2024-04-16 21:28:23 / 修改时间：21:54:53" itemprop="dateCreated datePublished" datetime="2024-04-16T21:28:23+08:00">2024-04-16</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -221,6 +221,8 @@
 
       
         <p>之前发的在aarch64 Linux上运行amd64架构的应用，本质上是因为我需要一个跑谷歌测试工具的环境，重新读了一下README和启动脚本后发现，这个工具并没有限制一定要运行在Linux系统上，<br>从启动脚本来看，至少是可以支持Linux和macOS的，并且我在M1 Pro上也确实跑成功了，但在arm64的Ubuntu上却没有，之后如果有空的话再研究看看咋回事</p>
+<span id="more"></span>
+
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">checkPath aapt</span><br><span class="line">checkPath adb</span><br><span class="line">checkPath java</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">get OS</span></span><br><span class="line">HOST=`uname`</span><br><span class="line">if [ &quot;$HOST&quot; == &quot;Linux&quot; ]; then</span><br><span class="line">    OS=&quot;linux-x86&quot;</span><br><span class="line">elif [ &quot;$HOST&quot; == &quot;Darwin&quot; ]; then</span><br><span class="line">    OS=&quot;darwin-x86&quot;</span><br><span class="line">    # Bundled java is for linux so use host JDK on Darwin</span><br><span class="line">    JAVA_BINARY=java</span><br><span class="line">else</span><br><span class="line">    echo &quot;Unrecognized OS&quot;</span><br><span class="line">    exit</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
 
 <p>要启动测试工具主要有4个检查，一类是检查环境变量，一类是检查系统，环境变量里需要有aapt，adb和java，系统需要时Linux或macOS，我安装的java版本是11.0.18，似乎是同时兼容x86_64和arm64e</p>
