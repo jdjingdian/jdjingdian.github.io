@@ -1,3 +1,4 @@
+https://blog.magicdian.cn/202404/Linux%E7%BD%91%E7%BB%9C%E5%85%B1%E4%BA%AB%E5%9C%A8fstab%E5%BB%B6%E8%BF%9F%E6%8C%82%E8%BD%BD/
 https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/
 https://blog.magicdian.cn/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/
 https://blog.magicdian.cn/202404/eBPF%EF%BC%9AUbuntu%E5%B9%B3%E5%8F%B0%E4%BD%BF%E7%94%A8%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91BCC/
@@ -7,4 +8,3 @@ https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4
 https://blog.magicdian.cn/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/
 https://blog.magicdian.cn/202404/mac%E5%B9%B3%E5%8F%B0%E9%85%8D%E7%BD%AE%E8%B0%B7%E6%AD%8CGMS%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/
 https://blog.magicdian.cn/202404/OpenHarmony%E4%BB%A3%E7%A0%81%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91%E7%AE%80%E5%8D%95%E8%AE%B0%E5%BD%95/
-https://blog.magicdian.cn/202404/VRRP%E5%8D%8F%E8%AE%AE%E7%AE%80%E6%9E%90/
