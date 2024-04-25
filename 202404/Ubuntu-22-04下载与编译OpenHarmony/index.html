@@ -20,31 +20,36 @@
     var CONFIG = {"hostname":"blog.magicdian.cn","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="MAGICDIAN的博客，记录学习与思考">
-<meta property="og:type" content="website">
-<meta property="og:title" content="魔趣典藏阁">
-<meta property="og:url" content="https://blog.magicdian.cn/index.html">
+  <meta name="description" content="前情提要之前文章简要记录了OpenHarmony的下载与编译流程，但是当时配置时没有把每个步骤记录下来，所以写的不是很详细，刚好因为重装了服务器的系统，可以重新来一遍，决定详细记录一下。 OpenHarmony代码下载与编译简单记录  我的开发环境简介 OS: Ubuntu 22.04.4 LTS CPU: AMD EPYC 7402P  12345678910111213141516171819">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ubuntu 22.04下载与编译OpenHarmony">
+<meta property="og:url" content="https://blog.magicdian.cn/202404/Ubuntu-22-04%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91OpenHarmony/index.html">
 <meta property="og:site_name" content="魔趣典藏阁">
-<meta property="og:description" content="MAGICDIAN的博客，记录学习与思考">
+<meta property="og:description" content="前情提要之前文章简要记录了OpenHarmony的下载与编译流程，但是当时配置时没有把每个步骤记录下来，所以写的不是很详细，刚好因为重装了服务器的系统，可以重新来一遍，决定详细记录一下。 OpenHarmony代码下载与编译简单记录  我的开发环境简介 OS: Ubuntu 22.04.4 LTS CPU: AMD EPYC 7402P  12345678910111213141516171819">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-04-25T04:07:29.000Z">
+<meta property="article:modified_time" content="2024-04-25T04:34:37.585Z">
 <meta property="article:author" content="MAGICDIAN">
-<meta property="article:tag" content="计算机网络,捡垃圾,洋垃圾,eBPF,XDP,DPDK,RDMA">
+<meta property="article:tag" content="Ubuntu">
+<meta property="article:tag" content="华为">
+<meta property="article:tag" content="HarmonyOS">
+<meta property="article:tag" content="OpenHarmony">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://blog.magicdian.cn/">
+<link rel="canonical" href="https://blog.magicdian.cn/202404/Ubuntu-22-04%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91OpenHarmony/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>魔趣典藏阁 - 更高，更快，更强</title>
+  <title>Ubuntu 22.04下载与编译OpenHarmony | 魔趣典藏阁</title>
   
 
 
@@ -162,9 +167,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -180,10 +186,9 @@
       <meta itemprop="name" content="魔趣典藏阁">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/Ubuntu-22-04%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91OpenHarmony/" class="post-title-link" itemprop="url">Ubuntu 22.04下载与编译OpenHarmony</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          Ubuntu 22.04下载与编译OpenHarmony
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -216,7 +221,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>之前文章简要记录了OpenHarmony的下载与编译流程，但是当时配置时没有把每个步骤记录下来，所以写的不是很详细，刚好因为重装了服务器的系统，可以重新来一遍，决定详细记录一下。</p>
+        <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>之前文章简要记录了OpenHarmony的下载与编译流程，但是当时配置时没有把每个步骤记录下来，所以写的不是很详细，刚好因为重装了服务器的系统，可以重新来一遍，决定详细记录一下。</p>
 <a href="/202404/OpenHarmony%E4%BB%A3%E7%A0%81%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91%E7%AE%80%E5%8D%95%E8%AE%B0%E5%BD%95/" title="OpenHarmony代码下载与编译简单记录">OpenHarmony代码下载与编译简单记录</a>
 
 <h1 id="我的开发环境简介"><a href="#我的开发环境简介" class="headerlink" title="我的开发环境简介"></a>我的开发环境简介</h1><ul>
@@ -297,754 +302,37 @@
 
 <h2 id="编译（针对RK3568）"><a href="#编译（针对RK3568）" class="headerlink" title="编译（针对RK3568）"></a>编译（针对RK3568）</h2><p>使用这个命令编译即可</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build.sh --product-name rk3568</span><br></pre></td></tr></table></figure>
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
+          <div class="post-tags">
+              <a href="/tags/Ubuntu/" rel="tag"># Ubuntu</a>
+              <a href="/tags/%E5%8D%8E%E4%B8%BA/" rel="tag"># 华为</a>
+              <a href="/tags/HarmonyOS/" rel="tag"># HarmonyOS</a>
+              <a href="/tags/OpenHarmony/" rel="tag"># OpenHarmony</a>
+          </div>
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/Linux%E7%BD%91%E7%BB%9C%E5%85%B1%E4%BA%AB%E5%9C%A8fstab%E5%BB%B6%E8%BF%9F%E6%8C%82%E8%BD%BD/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/Linux%E7%BD%91%E7%BB%9C%E5%85%B1%E4%BA%AB%E5%9C%A8fstab%E5%BB%B6%E8%BF%9F%E6%8C%82%E8%BD%BD/" class="post-title-link" itemprop="url">Linux网络共享在fstab延迟挂载</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-24 15:50:39 / 修改时间：15:52:42" itemprop="dateCreated datePublished" datetime="2024-04-24T15:50:39+08:00">2024-04-24</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>我在家里的NAS上分配了2TB的空间，通过ISCSI共享给服务器。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/Linux%E7%BD%91%E7%BB%9C%E5%85%B1%E4%BA%AB%E5%9C%A8fstab%E5%BB%B6%E8%BF%9F%E6%8C%82%E8%BD%BD/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/" class="post-title-link" itemprop="url">使用clang + libbpf 编写eBPF XDP程序</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:44:21 / 修改时间：21:50:02" itemprop="dateCreated datePublished" datetime="2024-04-16T21:44:21+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">高性能网络</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/XDP/" itemprop="url" rel="index"><span itemprop="name">XDP</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>之前介绍了使用python + BCC套件的方式来编写eBPF程序，应该比较容易理解。</p>
-<p>但在实际的生产场景中，如果要与现有的程序相结合，python可能并不是一个特别好的选择，比如我想在Android平台开发eBPF功能，系统没有python，那咋开发咧？</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/%E4%BD%BF%E7%94%A8clang-libbpf-%E7%BC%96%E5%86%99eBPF-XDP%E7%A8%8B%E5%BA%8F/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/202404/Linux%E7%BD%91%E7%BB%9C%E5%85%B1%E4%BA%AB%E5%9C%A8fstab%E5%BB%B6%E8%BF%9F%E6%8C%82%E8%BD%BD/" rel="prev" title="Linux网络共享在fstab延迟挂载">
+      <i class="fa fa-chevron-left"></i> Linux网络共享在fstab延迟挂载
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
   
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/" class="post-title-link" itemprop="url">eBPF：简单的ICMP数据拦截器（Python + BCC）</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:40:21 / 修改时间：21:44:46" itemprop="dateCreated datePublished" datetime="2024-04-16T21:40:21+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">高性能网络</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/XDP/" itemprop="url" rel="index"><span itemprop="name">XDP</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>我觉得兴趣是最好的老师，所以我想用一个直观的案例，让大家感受到eBPF的奥妙。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/eBPF%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84ICMP%E6%95%B0%E6%8D%AE%E6%8B%A6%E6%88%AA%E5%99%A8%EF%BC%88Python-BCC%EF%BC%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/eBPF%EF%BC%9AUbuntu%E5%B9%B3%E5%8F%B0%E4%BD%BF%E7%94%A8%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91BCC/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/eBPF%EF%BC%9AUbuntu%E5%B9%B3%E5%8F%B0%E4%BD%BF%E7%94%A8%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91BCC/" class="post-title-link" itemprop="url">eBPF：Ubuntu平台使用源码编译BCC</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:37:54 / 修改时间：21:39:58" itemprop="dateCreated datePublished" datetime="2024-04-16T21:37:54+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><strong>我个人非常不推荐使用APT方式安装</strong><br><strong>我个人非常不推荐使用APT方式安装</strong><br><strong>我个人非常不推荐使用APT方式安装</strong></p>
-<p>已经踩过坑了，APT方式安装的版本比较旧，导致程序跑不起来。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/eBPF%EF%BC%9AUbuntu%E5%B9%B3%E5%8F%B0%E4%BD%BF%E7%94%A8%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91BCC/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/eBPF%EF%BC%9AXDP%EF%BC%8C%E5%86%85%E6%A0%B8%E9%AB%98%E9%80%9F%E8%B7%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/eBPF%EF%BC%9AXDP%EF%BC%8C%E5%86%85%E6%A0%B8%E9%AB%98%E9%80%9F%E8%B7%AF/" class="post-title-link" itemprop="url">eBPF：XDP，内核高速路</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:36:29 / 修改时间：21:40:40" itemprop="dateCreated datePublished" datetime="2024-04-16T21:36:29+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">高性能网络</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/XDP/" itemprop="url" rel="index"><span itemprop="name">XDP</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="诞生背景"><a href="#诞生背景" class="headerlink" title="诞生背景"></a>诞生背景</h1><p>Linux内核的TCP&#x2F;IP协议栈在诞生之初更注重的是通用性，随着技术的发展，10G、25G、100G甚至更高规格的网卡出现，原生的TCP&#x2F;IP协议栈的开销会更容易被注意到。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/eBPF%EF%BC%9AXDP%EF%BC%8C%E5%86%85%E6%A0%B8%E9%AB%98%E9%80%9F%E8%B7%AF/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/eBPF%E5%88%9D%E8%A7%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/eBPF%E5%88%9D%E8%A7%81/" class="post-title-link" itemprop="url">eBPF初见</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:34:58 / 修改时间：21:38:47" itemprop="dateCreated datePublished" datetime="2024-04-16T21:34:58+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">学习</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E4%B9%A0/eBPF/" itemprop="url" rel="index"><span itemprop="name">eBPF</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>更高，更快，更强</p>
-</blockquote>
-<h1 id="0x0-前情提要"><a href="#0x0-前情提要" class="headerlink" title="0x0 前情提要"></a>0x0 前情提要</h1><p>毕业工作后，eBPF技术是我在工作中学习并成功使用的一项技术，成功使用这个技术让我非常有成就感。我认为这项技术大有可为，在此与大家分享。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/eBPF%E5%88%9D%E8%A7%81/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/" class="post-title-link" itemprop="url">NFS配合BTRFS的媒体下载播放组合拳</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:33:04 / 修改时间：21:34:36" itemprop="dateCreated datePublished" datetime="2024-04-16T21:33:04+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h1><p>在之前的文章”<strong>在OpenMediaVault上配置NFS over RDMA</strong>“中，我提到了我对内网软硬件设计的架构。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/NFS%E9%85%8D%E5%90%88BTRFS%E7%9A%84%E5%AA%92%E4%BD%93%E4%B8%8B%E8%BD%BD%E6%92%AD%E6%94%BE%E7%BB%84%E5%90%88%E6%8B%B3/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/" class="post-title-link" itemprop="url">在OpenMediaVault上配置NFS over RDMA</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:29:43 / 修改时间：21:32:18" itemprop="dateCreated datePublished" datetime="2024-04-16T21:29:43+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>理论上使用<strong>nfs-kernel-server</strong>的服务器都可以用这个方法进行配置，可以用如下命令安装</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install nfs-kernel-server</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.magicdian.cn/202404/mac%E5%B9%B3%E5%8F%B0%E9%85%8D%E7%BD%AE%E8%B0%B7%E6%AD%8CGMS%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="MAGICDIAN">
-      <meta itemprop="description" content="MAGICDIAN的博客，记录学习与思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="魔趣典藏阁">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/202404/mac%E5%B9%B3%E5%8F%B0%E9%85%8D%E7%BD%AE%E8%B0%B7%E6%AD%8CGMS%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">mac平台配置谷歌GMS测试工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2024-04-16 21:28:23 / 修改时间：21:54:53" itemprop="dateCreated datePublished" datetime="2024-04-16T21:28:23+08:00">2024-04-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%BF%90%E7%BB%B4%E9%85%8D%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">运维配置</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>之前发的在aarch64 Linux上运行amd64架构的应用，本质上是因为我需要一个跑谷歌测试工具的环境，重新读了一下README和启动脚本后发现，这个工具并没有限制一定要运行在Linux系统上，<br>从启动脚本来看，至少是可以支持Linux和macOS的，并且我在M1 Pro上也确实跑成功了，但在arm64的Ubuntu上却没有，之后如果有空的话再研究看看咋回事</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/202404/mac%E5%B9%B3%E5%8F%B0%E9%85%8D%E7%BD%AE%E8%B0%B7%E6%AD%8CGMS%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
-  </nav>
 
 
 
@@ -1096,6 +384,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">我的开发环境简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Gitee%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">Gitee配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AESSH%E5%AF%86%E9%92%A5"><span class="nav-number">3.1.</span> <span class="nav-text">配置SSH密钥</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E5%AF%86%E9%92%A5"><span class="nav-number">3.1.1.</span> <span class="nav-text">生成密钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%85%AC%E9%92%A5%E5%B9%B6%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.2.</span> <span class="nav-text">查看公钥并配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E9%85%8D%E7%BD%AEssh-config"><span class="nav-number">3.1.3.</span> <span class="nav-text">本地配置ssh config</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%98%AF%E5%90%A6%E7%94%9F%E6%95%88"><span class="nav-number">3.2.</span> <span class="nav-text">测试是否生效</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8B%89%E5%8F%96%E4%BB%93%E5%BA%93%EF%BC%88%E5%9F%BA%E4%BA%8Erepo%E6%96%B9%E6%B3%95%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">拉取仓库（基于repo方法）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E6%8B%89%E5%8F%96%E4%BE%9D%E8%B5%96"><span class="nav-number">4.1.</span> <span class="nav-text">安装拉取依赖</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85git-lfs"><span class="nav-number">4.1.1.</span> <span class="nav-text">安装git-lfs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85repo%E5%B7%A5%E5%85%B7"><span class="nav-number">4.1.2.</span> <span class="nav-text">安装repo工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEbash-profile"><span class="nav-number">4.1.3.</span> <span class="nav-text">配置bash profile</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEgit%E7%94%A8%E6%88%B7%E4%B8%8E%E9%82%AE%E7%AE%B1"><span class="nav-number">4.2.</span> <span class="nav-text">配置git用户与邮箱</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E6%96%B9%E6%B3%95%E9%85%8D%E7%BD%AEgit%E7%94%A8%E6%88%B7%E4%B8%8E%E9%82%AE%E7%AE%B1"><span class="nav-number">4.2.1.</span> <span class="nav-text">官方方法配置git用户与邮箱</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%87%E5%AE%9Aopenharmony%E4%BB%93%E5%BA%93%E4%BD%BF%E7%94%A8gitee%E8%B4%A6%E6%88%B7"><span class="nav-number">4.2.2.</span> <span class="nav-text">指定openharmony仓库使用gitee账户</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96repo%E4%BB%93%E5%BA%93%EF%BC%88%E4%BB%A5master%E5%88%86%E6%94%AF%E4%B8%BA%E4%BE%8B%EF%BC%89"><span class="nav-number">4.3.</span> <span class="nav-text">初始化repo仓库（以master分支为例）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%89%E5%8F%96OpenHarmony%E4%BB%A3%E7%A0%81"><span class="nav-number">4.4.</span> <span class="nav-text">拉取OpenHarmony代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#repo%E6%8B%89%E5%8F%96%E9%83%A8%E5%88%86"><span class="nav-number">4.4.1.</span> <span class="nav-text">repo拉取部分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#git-lfs%E4%BB%93%E5%BA%93%E6%9B%B4%E6%96%B0"><span class="nav-number">4.4.2.</span> <span class="nav-text">git-lfs仓库更新</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81"><span class="nav-number">5.</span> <span class="nav-text">编译代码</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E7%8E%AF%E5%A2%83%E4%BE%9D%E8%B5%96"><span class="nav-number">5.1.</span> <span class="nav-text">安装环境依赖</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E8%A6%81%E6%B1%82"><span class="nav-number">5.1.1.</span> <span class="nav-text">官方要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%9D%E5%A4%96%E7%9A%84%E4%B8%80%E4%BA%9B%E9%85%8D%E7%BD%AE"><span class="nav-number">5.1.2.</span> <span class="nav-text">额外的一些配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEpython"><span class="nav-number">5.1.2.1.</span> <span class="nav-text">配置python</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E8%A3%85java-wrappers"><span class="nav-number">5.1.2.2.</span> <span class="nav-text">安装java-wrappers</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E8%A3%85libglfw3%E4%B8%8Emesa"><span class="nav-number">5.1.2.3.</span> <span class="nav-text">安装libglfw3与mesa</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9%E9%BB%98%E8%AE%A4shell%E7%8E%AF%E5%A2%83%E4%B8%BAbash"><span class="nav-number">5.1.2.4.</span> <span class="nav-text">修改默认shell环境为bash</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E9%A1%B9%E7%9B%AEprebuilts"><span class="nav-number">5.1.2.5.</span> <span class="nav-text">下载项目prebuilts</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B5%8B%E4%BA%88build-sh%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%9D%83%E9%99%90"><span class="nav-number">5.1.2.6.</span> <span class="nav-text">赋予build.sh可执行权限</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%EF%BC%88%E9%92%88%E5%AF%B9RK3568%EF%BC%89"><span class="nav-number">5.2.</span> <span class="nav-text">编译（针对RK3568）</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

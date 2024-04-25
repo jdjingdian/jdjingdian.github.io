@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://blog.magicdian.cn/202404/Ubuntu-22-04%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91OpenHarmony/</loc>
+    <lastmod>2024-04-25</lastmod>
+  </url>
+  <url>
+    <loc>https://blog.magicdian.cn/202404/OpenHarmony%E4%BB%A3%E7%A0%81%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91%E7%AE%80%E5%8D%95%E8%AE%B0%E5%BD%95/</loc>
+    <lastmod>2024-04-25</lastmod>
+  </url>
+  <url>
     <loc>https://blog.magicdian.cn/202404/Linux%E7%BD%91%E7%BB%9C%E5%85%B1%E4%BA%AB%E5%9C%A8fstab%E5%BB%B6%E8%BF%9F%E6%8C%82%E8%BD%BD/</loc>
     <lastmod>2024-04-24</lastmod>
   </url>
@@ -38,10 +46,6 @@
   </url>
   <url>
     <loc>https://blog.magicdian.cn/202404/%E5%9C%A8OpenMediaVault%E4%B8%8A%E9%85%8D%E7%BD%AENFS-over-RDMA/</loc>
-    <lastmod>2024-04-16</lastmod>
-  </url>
-  <url>
-    <loc>https://blog.magicdian.cn/202404/OpenHarmony%E4%BB%A3%E7%A0%81%E4%B8%8B%E8%BD%BD%E4%B8%8E%E7%BC%96%E8%AF%91%E7%AE%80%E5%8D%95%E8%AE%B0%E5%BD%95/</loc>
     <lastmod>2024-04-16</lastmod>
   </url>
   <url>
